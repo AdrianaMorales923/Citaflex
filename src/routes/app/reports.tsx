@@ -534,6 +534,16 @@ const TOOLTIP_STYLE = {
   color: "var(--foreground)",
 } as const;
 
+const LEGEND_STYLE = { fontSize: 12, paddingTop: 8 } as const;
+
+/** Legend de pastel con el porcentaje de cada porción respecto al total. */
+const legendWithPct = (total: number) => (_value: unknown, entry: unknown) => {
+  const payload = (entry as { payload?: { value?: number } } | undefined)?.payload;
+  const pct = total > 0 && payload?.value != null ? Math.round((payload.value / total) * 100) : 0;
+  const label = typeof _value === "string" ? _value : String(_value ?? "");
+  return `${label} · ${pct}%`;
+};
+
 type Money = (n: number) => string;
 
 function AppointmentsReport({
@@ -567,13 +577,28 @@ function AppointmentsReport({
               <ResponsiveContainer>
                 <BarChart data={appts}>
                   <CartesianGrid {...GRID} vertical={false} />
-                  <XAxis dataKey="label" {...AXIS} tickLine={false} axisLine={false} />
-                  <YAxis {...AXIS} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <XAxis
+                    dataKey="label"
+                    {...AXIS}
+                    tickLine={false}
+                    axisLine={false}
+                    interval="preserveStartEnd"
+                    minTickGap={14}
+                    tickMargin={10}
+                  />
+                  <YAxis
+                    {...AXIS}
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                    width={30}
+                  />
                   <Tooltip
                     contentStyle={TOOLTIP_STYLE}
                     cursor={{ fill: "var(--accent)", opacity: 0.4 }}
+                    formatter={(v) => `${v} citas`}
                   />
-                  <Legend />
+                  <Legend wrapperStyle={LEGEND_STYLE} />
                   <Bar
                     dataKey="completadas"
                     name="Agendadas"
@@ -608,7 +633,10 @@ function AppointmentsReport({
                   ))}
                 </Pie>
                 <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Legend />
+                <Legend
+                  wrapperStyle={LEGEND_STYLE}
+                  formatter={legendWithPct(status.reduce((a, b) => a + b.value, 0))}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -649,10 +677,24 @@ function ClientsReport({
               <ResponsiveContainer>
                 <LineChart data={series}>
                   <CartesianGrid {...GRID} vertical={false} />
-                  <XAxis dataKey="label" {...AXIS} tickLine={false} axisLine={false} />
-                  <YAxis {...AXIS} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <XAxis
+                    dataKey="label"
+                    {...AXIS}
+                    tickLine={false}
+                    axisLine={false}
+                    interval="preserveStartEnd"
+                    minTickGap={14}
+                    tickMargin={10}
+                  />
+                  <YAxis
+                    {...AXIS}
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                    width={30}
+                  />
                   <Tooltip contentStyle={TOOLTIP_STYLE} />
-                  <Legend />
+                  <Legend wrapperStyle={LEGEND_STYLE} />
                   <Line
                     type="monotone"
                     dataKey="value"
@@ -729,7 +771,10 @@ function ServicesReport({
                   ))}
                 </Pie>
                 <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Legend />
+                <Legend
+                  wrapperStyle={LEGEND_STYLE}
+                  formatter={legendWithPct(mix.reduce((a, b) => a + b.value, 0))}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -807,15 +852,24 @@ function RevenueReport({
                     </linearGradient>
                   </defs>
                   <CartesianGrid {...GRID} vertical={false} />
-                  <XAxis dataKey="label" {...AXIS} tickLine={false} axisLine={false} />
+                  <XAxis
+                    dataKey="label"
+                    {...AXIS}
+                    tickLine={false}
+                    axisLine={false}
+                    interval="preserveStartEnd"
+                    minTickGap={14}
+                    tickMargin={10}
+                  />
                   <YAxis
                     {...AXIS}
                     tickLine={false}
                     axisLine={false}
+                    width={40}
                     tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                   />
                   <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => formatMoney(v)} />
-                  <Legend />
+                  <Legend wrapperStyle={LEGEND_STYLE} />
                   <Area
                     type="monotone"
                     dataKey="value"
@@ -846,7 +900,10 @@ function RevenueReport({
                   ))}
                 </Pie>
                 <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => formatMoney(v)} />
-                <Legend />
+                <Legend
+                  wrapperStyle={LEGEND_STYLE}
+                  formatter={legendWithPct(mix.reduce((a, b) => a + b.value, 0))}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>

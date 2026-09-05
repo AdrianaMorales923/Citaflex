@@ -168,9 +168,9 @@ function MyAppointments() {
           </p>
         </div>
         <Button asChild className="gap-2 self-start sm:self-auto">
-          <a href="/book">
+          <Link to="/book">
             <Plus className="h-4 w-4" /> Reservar nueva cita
-          </a>
+          </Link>
         </Button>
       </div>
 
@@ -192,7 +192,7 @@ function MyAppointments() {
         <div className="card-surface rounded-xl border border-dashed border-border p-10 text-center">
           <p className="text-sm text-muted-foreground">No tienes próximas citas.</p>
           <Button asChild variant="link" className="mt-2">
-            <a href="/book">Reservar una ahora</a>
+            <Link to="/book">Reservar una ahora</Link>
           </Button>
         </div>
       ) : (

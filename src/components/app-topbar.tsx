@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useNotifications } from "@/lib/use-notifications";
+import { useRole } from "@/lib/role-context";
 
 const toneStyles: Record<string, string> = {
   primary: "bg-primary/10 text-primary",
@@ -16,6 +17,7 @@ const toneStyles: Record<string, string> = {
 export function AppTopbar({ onMenuClick, title }: { onMenuClick: () => void; title: string }) {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { role } = useRole();
   const { notifs, unread, markAllRead, markRead, clearAll } = useNotifications();
   const [creating, setCreating] = useState(false);
 
@@ -23,6 +25,11 @@ export function AppTopbar({ onMenuClick, title }: { onMenuClick: () => void; tit
     if (creating) return;
     setCreating(true);
     try {
+      if (role === "client") {
+        await navigate({ to: "/book" });
+        toast.success("Abriendo formulario de reserva");
+        return;
+      }
       await navigate({ to: "/app/appointments", search: { new: 1 } });
       toast.success("Abriendo formulario de nueva cita");
     } finally {

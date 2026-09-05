@@ -14,6 +14,7 @@ import {
   Smartphone,
   Check,
   Pencil,
+  Copy,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -357,7 +358,7 @@ function LoadingCard() {
 
 /* ---------------- HOURS ---------------- */
 function HoursTab() {
-  const { settings, saveSettings } = useBusiness();
+  const { business, settings, saveSettings } = useBusiness();
   const [hours, setHours] = useState<Record<string, DayCfg> | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -391,8 +392,13 @@ function HoursTab() {
 
   const save = async () => {
     if (!hours) return;
+    if (!business?.id) {
+      toast.error("Aún no hay un negocio configurado para guardar los horarios");
+      return;
+    }
     setSaving(true);
     const rows = DAYS.filter((d) => hours[d.key].enabled).map((d) => ({
+      business_id: business.id,
       day: d.key,
       enabled: true,
       open_time: hours[d.key].open,
@@ -415,11 +421,14 @@ function HoursTab() {
   return (
     <SectionCard
       title="Horarios y días laborales"
-      description="Define cuándo tu negocio acepta reservas."
+      description="Define cuándo tu negocio acepta reservas. Los días desactivados no reciben citas."
       action={
         <Button
           variant="outline"
           size="sm"
+          className="gap-1.5"
+          title="Copia la hora de apertura y cierre del primer día habilitado a todos los demás días habilitados."
+          disabled={!DAYS.some((d) => hours[d.key].enabled)}
           onClick={() => {
             const first = DAYS.find((d) => hours[d.key].enabled);
             if (!first) return;
@@ -434,9 +443,12 @@ function HoursTab() {
                   };
               return next;
             });
+            toast.success(
+              `Horario de ${first.label} copiado a todos los días activos. Pulsa "Guardar horarios" para aplicar.`,
+            );
           }}
         >
-          Copiar a todos
+          <Copy className="h-3.5 w-3.5" /> Copiar horario a días activos
         </Button>
       }
     >

@@ -703,7 +703,7 @@ function AppointmentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4">
+        <div className="grid max-h-[min(55vh,28rem)] gap-4 overflow-y-auto pr-1">
           <div className="grid grid-cols-2 gap-3">
             <FieldWrap icon={<CalIcon className="h-3.5 w-3.5" />} label="Fecha">
               <Input type="date" value={form.date} onChange={(e) => set("date", e.target.value)} />

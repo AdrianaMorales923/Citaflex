@@ -38,7 +38,7 @@ const ITEMS: Record<Role, Item[]> = {
   client: [
     { to: "/app/my-appointments", label: "Mis citas", icon: CalendarDays },
     { to: "/app/history", label: "Historial", icon: History },
-    { to: "/book", label: "Reservar", icon: Globe, external: true },
+    { to: "/book", label: "Reservar", icon: Globe },
     { to: "/app/profile", label: "Perfil", icon: UserCircle },
   ],
 };

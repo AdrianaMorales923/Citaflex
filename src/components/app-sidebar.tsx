@@ -50,7 +50,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { to: "/app/my-appointments", label: "Mis citas", icon: CalendarDays, perm: "my-appointments" },
     { to: "/app/history", label: "Historial", icon: History, perm: "history" },
     { to: "/app/profile", label: "Mi perfil", icon: UserCircle, perm: "profile" },
-    { to: "/book", label: "Reservar cita", icon: Globe, perm: "book", external: true },
+    { to: "/book", label: "Reservar cita", icon: Globe, perm: "book" },
   ],
 };
 
