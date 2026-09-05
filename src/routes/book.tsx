@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { formatMoney as fmtCop } from "@/lib/money";
 import { useMemo, useState } from "react";
 import {
   CalendarCheck2,
@@ -24,27 +25,95 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/book")({ component: PublicBooking });
 
-type Service = { id: string; name: string; duration: number; price: number; icon: typeof Scissors; desc: string };
+type Service = {
+  id: string;
+  name: string;
+  duration: number;
+  price: number;
+  icon: typeof Scissors;
+  desc: string;
+};
 type Staff = { id: string; name: string; role: string; rating: number; services: string[] };
 
 const SERVICES: Service[] = [
-  { id: "corte", name: "Corte + Peinado", duration: 45, price: 40000, icon: Scissors, desc: "Corte profesional con lavado y peinado." },
-  { id: "color", name: "Coloración", duration: 90, price: 95000, icon: Brush, desc: "Coloración completa con productos premium." },
-  { id: "mani", name: "Manicure", duration: 60, price: 30000, icon: Sparkles, desc: "Manicure clásica con esmaltado." },
-  { id: "trata", name: "Tratamiento capilar", duration: 60, price: 70000, icon: Stethoscope, desc: "Hidratación profunda y reparación." },
-  { id: "maqui", name: "Maquillaje", duration: 60, price: 80000, icon: Sparkles, desc: "Maquillaje social o de evento." },
+  {
+    id: "corte",
+    name: "Corte + Peinado",
+    duration: 45,
+    price: 40000,
+    icon: Scissors,
+    desc: "Corte profesional con lavado y peinado.",
+  },
+  {
+    id: "color",
+    name: "Coloración",
+    duration: 90,
+    price: 95000,
+    icon: Brush,
+    desc: "Coloración completa con productos premium.",
+  },
+  {
+    id: "mani",
+    name: "Manicure",
+    duration: 60,
+    price: 30000,
+    icon: Sparkles,
+    desc: "Manicure clásica con esmaltado.",
+  },
+  {
+    id: "trata",
+    name: "Tratamiento capilar",
+    duration: 60,
+    price: 70000,
+    icon: Stethoscope,
+    desc: "Hidratación profunda y reparación.",
+  },
+  {
+    id: "maqui",
+    name: "Maquillaje",
+    duration: 60,
+    price: 80000,
+    icon: Sparkles,
+    desc: "Maquillaje social o de evento.",
+  },
 ];
 
 const STAFF: Staff[] = [
-  { id: "maria", name: "María González", role: "Estilista senior", rating: 4.9, services: ["corte", "color", "trata"] },
-  { id: "laura", name: "Laura Restrepo", role: "Colorista", rating: 4.8, services: ["color", "trata", "corte"] },
+  {
+    id: "maria",
+    name: "María González",
+    role: "Estilista senior",
+    rating: 4.9,
+    services: ["corte", "color", "trata"],
+  },
+  {
+    id: "laura",
+    name: "Laura Restrepo",
+    role: "Colorista",
+    rating: 4.8,
+    services: ["color", "trata", "corte"],
+  },
   { id: "camilo", name: "Camilo Vargas", role: "Barbero", rating: 4.7, services: ["corte"] },
   { id: "sara", name: "Sara López", role: "Manicurista", rating: 4.9, services: ["mani", "maqui"] },
 ];
 
-const ALL_SLOTS = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"];
-
-const fmtCop = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
+const ALL_SLOTS = [
+  "09:00",
+  "09:30",
+  "10:00",
+  "10:30",
+  "11:00",
+  "11:30",
+  "12:00",
+  "14:00",
+  "14:30",
+  "15:00",
+  "15:30",
+  "16:00",
+  "16:30",
+  "17:00",
+  "17:30",
+];
 
 function PublicBooking() {
   const [step, setStep] = useState(1);
@@ -56,9 +125,12 @@ function PublicBooking() {
   const [phone, setPhone] = useState("");
   const [confirmed, setConfirmed] = useState(false);
 
-  const service = SERVICES.find(s => s.id === serviceId) ?? null;
-  const staff = STAFF.find(s => s.id === staffId) ?? null;
-  const availableStaff = useMemo(() => serviceId ? STAFF.filter(s => s.services.includes(serviceId)) : STAFF, [serviceId]);
+  const service = SERVICES.find((s) => s.id === serviceId) ?? null;
+  const staff = STAFF.find((s) => s.id === staffId) ?? null;
+  const availableStaff = useMemo(
+    () => (serviceId ? STAFF.filter((s) => s.services.includes(serviceId)) : STAFF),
+    [serviceId],
+  );
 
   // Mock availability: deterministic per date+staff
   const availableSlots = useMemo(() => {
@@ -88,18 +160,24 @@ function PublicBooking() {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    setStep(s => s + 1);
+    setStep((s) => s + 1);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function back() {
-    setStep(s => Math.max(1, s - 1));
+    setStep((s) => Math.max(1, s - 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function reset() {
-    setStep(1); setServiceId(null); setStaffId(null); setDate(undefined); setTime(null);
-    setName(""); setPhone(""); setConfirmed(false);
+    setStep(1);
+    setServiceId(null);
+    setStaffId(null);
+    setDate(undefined);
+    setTime(null);
+    setName("");
+    setPhone("");
+    setConfirmed(false);
   }
 
   if (confirmed && service && staff && date && time) {
@@ -111,18 +189,33 @@ function PublicBooking() {
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-success/15 text-success">
               <Check className="h-7 w-7" />
             </div>
-            <h1 className="mt-5 font-display text-2xl font-bold sm:text-3xl">¡Tu cita está reservada!</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Te enviamos los detalles por SMS al {phone}.</p>
+            <h1 className="mt-5 font-display text-2xl font-bold sm:text-3xl">
+              ¡Tu cita está reservada!
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Te enviamos los detalles por SMS al {phone}.
+            </p>
             <div className="mt-6 grid gap-3 text-left">
               <SummaryRow label="Servicio" value={`${service.name} · ${service.duration} min`} />
               <SummaryRow label="Profesional" value={staff.name} />
-              <SummaryRow label="Fecha" value={date.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" })} />
+              <SummaryRow
+                label="Fecha"
+                value={date.toLocaleDateString("es-CO", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
+              />
               <SummaryRow label="Hora" value={time} />
               <SummaryRow label="Total" value={fmtCop(service.price)} />
             </div>
             <div className="mt-8 flex flex-col gap-2 sm:flex-row sm:justify-center">
-              <Button onClick={reset} variant="outline">Reservar otra cita</Button>
-              <Button asChild><Link to="/">Volver al inicio</Link></Button>
+              <Button onClick={reset} variant="outline">
+                Reservar otra cita
+              </Button>
+              <Button asChild>
+                <Link to="/">Volver al inicio</Link>
+              </Button>
             </div>
           </div>
         </main>
@@ -137,7 +230,9 @@ function PublicBooking() {
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
         {/* Hero */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">Reserva tu cita</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+            Reserva tu cita
+          </h1>
           <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 shrink-0" /> Salón Citaflex · Barranquilla
           </p>
@@ -147,18 +242,24 @@ function PublicBooking() {
         <ol className="mb-6 flex items-center gap-2 overflow-x-auto pb-1 sm:mb-8">
           {steps.map((s, i) => (
             <li key={s.n} className="flex shrink-0 items-center gap-2">
-              <div className={cn(
-                "flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition",
-                step === s.n ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                : step > s.n ? "border-success/40 bg-success/10 text-success"
-                : "border-border bg-card text-muted-foreground"
-              )}>
+              <div
+                className={cn(
+                  "flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                  step === s.n
+                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                    : step > s.n
+                      ? "border-success/40 bg-success/10 text-success"
+                      : "border-border bg-card text-muted-foreground",
+                )}
+              >
                 <span className="grid h-5 w-5 place-items-center rounded-full bg-background/20 text-[10px] font-bold">
                   {step > s.n ? <Check className="h-3 w-3" /> : s.n}
                 </span>
                 <span className="whitespace-nowrap">{s.label}</span>
               </div>
-              {i < steps.length - 1 && <ChevronRight className="h-4 w-4 text-muted-foreground/50" />}
+              {i < steps.length - 1 && (
+                <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+              )}
             </li>
           ))}
         </ol>
@@ -170,27 +271,44 @@ function PublicBooking() {
               <div className="space-y-3">
                 <h2 className="font-display text-lg font-semibold">Elige un servicio</h2>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {SERVICES.map(s => {
+                  {SERVICES.map((s) => {
                     const Icon = s.icon;
                     const active = serviceId === s.id;
                     return (
                       <button
                         key={s.id}
-                        onClick={() => { setServiceId(s.id); setStaffId(null); setTime(null); }}
+                        onClick={() => {
+                          setServiceId(s.id);
+                          setStaffId(null);
+                          setTime(null);
+                        }}
                         className={cn(
                           "group flex items-start gap-3 rounded-xl border p-4 text-left transition hover:shadow-md",
-                          active ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border bg-background hover:border-primary/40"
+                          active
+                            ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                            : "border-border bg-background hover:border-primary/40",
                         )}
                       >
-                        <div className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-lg", active ? "bg-primary text-primary-foreground" : "bg-accent text-accent-foreground")}>
+                        <div
+                          className={cn(
+                            "grid h-10 w-10 shrink-0 place-items-center rounded-lg",
+                            active
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-accent text-accent-foreground",
+                          )}
+                        >
                           <Icon className="h-5 w-5" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-2">
                             <h3 className="truncate text-sm font-semibold">{s.name}</h3>
-                            <span className="shrink-0 text-sm font-semibold text-primary">{fmtCop(s.price)}</span>
+                            <span className="shrink-0 text-sm font-semibold text-primary">
+                              {fmtCop(s.price)}
+                            </span>
                           </div>
-                          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{s.desc}</p>
+                          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                            {s.desc}
+                          </p>
                           <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                             <Clock className="h-3 w-3" /> {s.duration} min
                           </div>
@@ -206,19 +324,35 @@ function PublicBooking() {
               <div className="space-y-3">
                 <h2 className="font-display text-lg font-semibold">Elige un profesional</h2>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {availableStaff.map(s => {
+                  {availableStaff.map((s) => {
                     const active = staffId === s.id;
                     return (
                       <button
                         key={s.id}
-                        onClick={() => { setStaffId(s.id); setTime(null); }}
+                        onClick={() => {
+                          setStaffId(s.id);
+                          setTime(null);
+                        }}
                         className={cn(
                           "flex items-center gap-3 rounded-xl border p-4 text-left transition hover:shadow-md",
-                          active ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border bg-background hover:border-primary/40"
+                          active
+                            ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                            : "border-border bg-background hover:border-primary/40",
                         )}
                       >
-                        <div className={cn("grid h-12 w-12 shrink-0 place-items-center rounded-full text-base font-semibold", active ? "bg-primary text-primary-foreground" : "bg-accent text-accent-foreground")}>
-                          {s.name.split(" ").map(p => p[0]).slice(0, 2).join("")}
+                        <div
+                          className={cn(
+                            "grid h-12 w-12 shrink-0 place-items-center rounded-full text-base font-semibold",
+                            active
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-accent text-accent-foreground",
+                          )}
+                        >
+                          {s.name
+                            .split(" ")
+                            .map((p) => p[0])
+                            .slice(0, 2)
+                            .join("")}
                         </div>
                         <div className="min-w-0 flex-1">
                           <h3 className="truncate text-sm font-semibold">{s.name}</h3>
@@ -243,8 +377,11 @@ function PublicBooking() {
                     <Calendar
                       mode="single"
                       selected={date}
-                      onSelect={d => { setDate(d); setTime(null); }}
-                      disabled={d => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                      onSelect={(d) => {
+                        setDate(d);
+                        setTime(null);
+                      }}
+                      disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
                       className="pointer-events-auto"
                     />
                   </div>
@@ -252,12 +389,16 @@ function PublicBooking() {
                 <div>
                   <h2 className="font-display text-lg font-semibold">Horarios disponibles</h2>
                   {!date ? (
-                    <p className="mt-3 text-sm text-muted-foreground">Selecciona una fecha para ver los horarios.</p>
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      Selecciona una fecha para ver los horarios.
+                    </p>
                   ) : availableSlots.length === 0 ? (
-                    <p className="mt-3 text-sm text-muted-foreground">No hay disponibilidad este día. Prueba otra fecha.</p>
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      No hay disponibilidad este día. Prueba otra fecha.
+                    </p>
                   ) : (
                     <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
-                      {availableSlots.map(slot => {
+                      {availableSlots.map((slot) => {
                         const active = time === slot;
                         return (
                           <button
@@ -265,8 +406,9 @@ function PublicBooking() {
                             onClick={() => setTime(slot)}
                             className={cn(
                               "rounded-lg border px-2 py-2.5 text-sm font-medium transition",
-                              active ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                : "border-border bg-background hover:border-primary/40 hover:bg-accent"
+                              active
+                                ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                                : "border-border bg-background hover:border-primary/40 hover:bg-accent",
                             )}
                           >
                             {slot}
@@ -285,14 +427,27 @@ function PublicBooking() {
                 <div className="grid gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="name">Nombre completo</Label>
-                    <Input id="name" value={name} onChange={e => setName(e.target.value)} placeholder="Camila Torres" />
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Camila Torres"
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="phone">Teléfono / WhatsApp</Label>
-                    <Input id="phone" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+57 300 000 0000" inputMode="tel" />
+                    <Input
+                      id="phone"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+57 300 000 0000"
+                      inputMode="tel"
+                    />
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">Al confirmar aceptas recibir un recordatorio por SMS.</p>
+                <p className="text-xs text-muted-foreground">
+                  Al confirmar aceptas recibir un recordatorio por SMS.
+                </p>
               </div>
             )}
 
@@ -313,17 +468,34 @@ function PublicBooking() {
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
               <h3 className="font-display text-base font-semibold">Resumen</h3>
               <div className="mt-4 space-y-3 text-sm">
-                <SummaryLine icon={Sparkles} label="Servicio" value={service ? service.name : "—"} hint={service ? `${service.duration} min` : undefined} />
+                <SummaryLine
+                  icon={Sparkles}
+                  label="Servicio"
+                  value={service ? service.name : "—"}
+                  hint={service ? `${service.duration} min` : undefined}
+                />
                 <SummaryLine icon={User} label="Profesional" value={staff ? staff.name : "—"} />
-                <SummaryLine icon={CalendarCheck2} label="Fecha" value={date ? date.toLocaleDateString("es-CO", { day: "numeric", month: "short" }) : "—"} />
+                <SummaryLine
+                  icon={CalendarCheck2}
+                  label="Fecha"
+                  value={
+                    date
+                      ? date.toLocaleDateString("es-CO", { day: "numeric", month: "short" })
+                      : "—"
+                  }
+                />
                 <SummaryLine icon={Clock} label="Hora" value={time ?? "—"} />
               </div>
               <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
                 <span className="text-sm text-muted-foreground">Total</span>
-                <span className="font-display text-lg font-bold text-primary">{service ? fmtCop(service.price) : "—"}</span>
+                <span className="font-display text-lg font-bold text-primary">
+                  {service ? fmtCop(service.price) : "—"}
+                </span>
               </div>
               {service && (
-                <Badge variant="secondary" className="mt-3 w-full justify-center">Confirmación inmediata</Badge>
+                <Badge variant="secondary" className="mt-3 w-full justify-center">
+                  Confirmación inmediata
+                </Badge>
               )}
             </div>
           </aside>
@@ -343,7 +515,10 @@ function PublicHeader() {
           </div>
           <span className="truncate font-display text-base font-bold sm:text-lg">Citaflex</span>
         </Link>
-        <Link to="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+        <Link
+          to="/login"
+          className="text-sm font-medium text-muted-foreground hover:text-foreground"
+        >
           Entrar
         </Link>
       </div>
@@ -351,7 +526,17 @@ function PublicHeader() {
   );
 }
 
-function SummaryLine({ icon: Icon, label, value, hint }: { icon: typeof Sparkles; label: string; value: string; hint?: string }) {
+function SummaryLine({
+  icon: Icon,
+  label,
+  value,
+  hint,
+}: {
+  icon: typeof Sparkles;
+  label: string;
+  value: string;
+  hint?: string;
+}) {
   return (
     <div className="flex items-start gap-3">
       <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground">

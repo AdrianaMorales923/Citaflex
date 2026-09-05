@@ -77,7 +77,9 @@ export function usePasswordStrength(pwd: string) {
     if (/[0-9]/.test(pwd)) score++;
     if (/[^A-Za-z0-9]/.test(pwd)) score++;
     const label = ["Muy débil", "Débil", "Aceptable", "Fuerte", "Excelente"][score];
-    const color = ["bg-destructive", "bg-destructive", "bg-chart-4", "bg-chart-2", "bg-primary"][score];
+    const color = ["bg-destructive", "bg-destructive", "bg-chart-4", "bg-chart-2", "bg-primary"][
+      score
+    ];
     return { score, label, color };
   }, [pwd]);
 }

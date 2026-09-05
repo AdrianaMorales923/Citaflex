@@ -95,8 +95,18 @@ const TIME_SLOTS = Array.from({ length: 22 }, (_, i) => {
 
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const MONTHS = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
 ];
 
 function startOfWeek(d: Date) {
@@ -152,7 +162,14 @@ function Appointments() {
     ]);
 
     setClientsList((clientsRes.data ?? []).map((c) => ({ id: c.id, name: c.name })));
-    setServicesList((servicesRes.data ?? []).map((s) => ({ id: s.id, name: s.name, duration: s.duration, price: s.price })));
+    setServicesList(
+      (servicesRes.data ?? []).map((s) => ({
+        id: s.id,
+        name: s.name,
+        duration: s.duration,
+        price: s.price,
+      })),
+    );
     setStaffList((staffRes.data ?? []).map((s) => ({ id: s.id, name: s.name, role: s.role })));
 
     const { data: apptData } = await supabase
@@ -170,7 +187,7 @@ function Appointments() {
         staffId: a.staff_id,
         status: a.status as Status,
         notes: a.notes ?? "",
-      }))
+      })),
     );
 
     setLoading(false);
@@ -228,11 +245,17 @@ function Appointments() {
 
     if (editing) {
       const { error } = await supabase.from("appointments").update(dbPayload).eq("id", editing.id);
-      if (error) { toast.error("Error: " + error.message); return; }
+      if (error) {
+        toast.error("Error: " + error.message);
+        return;
+      }
       toast.success("Cita actualizada");
     } else {
       const { error } = await supabase.from("appointments").insert(dbPayload);
-      if (error) { toast.error("Error: " + error.message); return; }
+      if (error) {
+        toast.error("Error: " + error.message);
+        return;
+      }
       toast.success("Cita creada");
 
       // Create notification
@@ -252,7 +275,10 @@ function Appointments() {
   };
 
   const cancel = async (a: Appt) => {
-    const { error } = await supabase.from("appointments").update({ status: "Cancelada" }).eq("id", a.id);
+    const { error } = await supabase
+      .from("appointments")
+      .update({ status: "Cancelada" })
+      .eq("id", a.id);
     if (error) {
       toast.error("Error: " + error.message);
     } else {
@@ -279,7 +305,10 @@ function Appointments() {
     { label: "Hoy", value: todays.length },
     { label: "Confirmadas", value: todays.filter((a) => a.status === "Confirmada").length },
     { label: "Pendientes", value: todays.filter((a) => a.status === "Pendiente").length },
-    { label: "Esta semana", value: appts.filter((a) => weekDays.some((d) => fmt(d) === a.date)).length },
+    {
+      label: "Esta semana",
+      value: appts.filter((a) => weekDays.some((d) => fmt(d) === a.date)).length,
+    },
   ];
 
   return (
@@ -305,10 +334,7 @@ function Appointments() {
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {kpis.map((k) => (
-          <div
-            key={k.label}
-            className="rounded-xl border border-border bg-card p-4 shadow-sm"
-          >
+          <div key={k.label} className="rounded-xl border border-border bg-card p-4 shadow-sm">
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {k.label}
             </p>
@@ -424,7 +450,10 @@ function CalendarGrid({
   onApptClick: (a: Appt) => void;
 }) {
   const clientMap = useMemo(() => new Map(clientsList.map((c) => [c.id, c.name])), [clientsList]);
-  const serviceMap = useMemo(() => new Map(servicesList.map((s) => [s.id, s.name])), [servicesList]);
+  const serviceMap = useMemo(
+    () => new Map(servicesList.map((s) => [s.id, s.name])),
+    [servicesList],
+  );
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
@@ -525,7 +554,10 @@ function UpcomingList({
   const [query, setQuery] = useState("");
 
   const clientMap = useMemo(() => new Map(clientsList.map((c) => [c.id, c.name])), [clientsList]);
-  const serviceMap = useMemo(() => new Map(servicesList.map((s) => [s.id, s.name])), [servicesList]);
+  const serviceMap = useMemo(
+    () => new Map(servicesList.map((s) => [s.id, s.name])),
+    [servicesList],
+  );
   const staffMap = useMemo(() => new Map(staffList.map((s) => [s.id, s.name])), [staffList]);
 
   const upcoming = appts
@@ -568,7 +600,10 @@ function UpcomingList({
           const serviceName = serviceMap.get(a.serviceId) ?? "Servicio";
           const staffName = staffMap.get(a.staffId) ?? "Staff";
           return (
-            <li key={a.id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <li
+              key={a.id}
+              className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+            >
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Clock className="h-4 w-4" />
@@ -662,18 +697,16 @@ function AppointmentDialog({
             {isEdit ? "Editar cita" : "Nueva cita"}
           </DialogTitle>
           <DialogDescription>
-            {isEdit ? "Actualiza los detalles de la reserva." : "Completa la información para crear una reserva."}
+            {isEdit
+              ? "Actualiza los detalles de la reserva."
+              : "Completa la información para crear una reserva."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4">
           <div className="grid grid-cols-2 gap-3">
             <FieldWrap icon={<CalIcon className="h-3.5 w-3.5" />} label="Fecha">
-              <Input
-                type="date"
-                value={form.date}
-                onChange={(e) => set("date", e.target.value)}
-              />
+              <Input type="date" value={form.date} onChange={(e) => set("date", e.target.value)} />
             </FieldWrap>
             <FieldWrap icon={<Clock className="h-3.5 w-3.5" />} label="Hora">
               <Select value={form.time} onValueChange={(v) => set("time", v)}>
@@ -682,7 +715,9 @@ function AppointmentDialog({
                 </SelectTrigger>
                 <SelectContent className="max-h-64">
                   {TIME_SLOTS.map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -691,13 +726,19 @@ function AppointmentDialog({
 
           <FieldWrap icon={<User className="h-3.5 w-3.5" />} label="Cliente">
             <Select value={form.clientId} onValueChange={(v) => set("clientId", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {clientsList.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
                 ))}
                 {clientsList.length === 0 && (
-                  <SelectItem value="__none" disabled>No hay clientes</SelectItem>
+                  <SelectItem value="__none" disabled>
+                    No hay clientes
+                  </SelectItem>
                 )}
               </SelectContent>
             </Select>
@@ -705,7 +746,9 @@ function AppointmentDialog({
 
           <FieldWrap icon={<Scissors className="h-3.5 w-3.5" />} label="Servicio">
             <Select value={form.serviceId} onValueChange={(v) => set("serviceId", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {servicesList.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
@@ -713,7 +756,9 @@ function AppointmentDialog({
                   </SelectItem>
                 ))}
                 {servicesList.length === 0 && (
-                  <SelectItem value="__none" disabled>No hay servicios</SelectItem>
+                  <SelectItem value="__none" disabled>
+                    No hay servicios
+                  </SelectItem>
                 )}
               </SelectContent>
             </Select>
@@ -721,7 +766,9 @@ function AppointmentDialog({
 
           <FieldWrap icon={<UserCog className="h-3.5 w-3.5" />} label="Staff asignado">
             <Select value={form.staffId} onValueChange={(v) => set("staffId", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {staffList.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
@@ -729,7 +776,9 @@ function AppointmentDialog({
                   </SelectItem>
                 ))}
                 {staffList.length === 0 && (
-                  <SelectItem value="__none" disabled>No hay personal</SelectItem>
+                  <SelectItem value="__none" disabled>
+                    No hay personal
+                  </SelectItem>
                 )}
               </SelectContent>
             </Select>
@@ -758,7 +807,10 @@ function AppointmentDialog({
           </div>
 
           <div>
-            <Label htmlFor="notes" className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <Label
+              htmlFor="notes"
+              className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground"
+            >
               Notas
             </Label>
             <Textarea
@@ -780,7 +832,9 @@ function AppointmentDialog({
             >
               <X className="h-4 w-4" /> Cancelar cita
             </Button>
-          ) : <span />}
+          ) : (
+            <span />
+          )}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cerrar

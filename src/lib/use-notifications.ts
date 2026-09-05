@@ -66,7 +66,10 @@ export function useNotifications() {
   const [loading, setLoading] = useState(true);
 
   const fetchNotifs = useCallback(async () => {
-    if (!user) { setLoading(false); return; }
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     const { data } = await supabase
       .from("notifications")
@@ -96,19 +99,13 @@ export function useNotifications() {
   }, [user]);
 
   const markRead = useCallback(async (id: string) => {
-    await supabase
-      .from("notifications")
-      .update({ read: true })
-      .eq("id", id);
+    await supabase.from("notifications").update({ read: true }).eq("id", id);
     setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   }, []);
 
   const clearAll = useCallback(async () => {
     if (!user) return;
-    await supabase
-      .from("notifications")
-      .delete()
-      .eq("user_id", user.id);
+    await supabase.from("notifications").delete().eq("user_id", user.id);
     setNotifs([]);
   }, [user]);
 
@@ -121,7 +118,7 @@ export function useNotifications() {
  */
 export async function createNotification(
   userId: string,
-  opts: { title: string; description: string; tone?: NotifTone; icon?: string }
+  opts: { title: string; description: string; tone?: NotifTone; icon?: string },
 ) {
   await supabase.from("notifications").insert({
     user_id: userId,

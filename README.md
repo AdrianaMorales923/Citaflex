@@ -5,22 +5,24 @@ Plataforma SaaS para gestionar citas, clientes y servicios, disenada para profes
 ## Stack
 
 ### Frontend
-| Tecnologia | Uso |
-|---|---|
-| React 19 | UI library |
-| TypeScript 5.8 | Lenguaje |
-| Vite 7 | Build tool y dev server |
-| TanStack Router | Client-side routing |
-| Tailwind CSS 4 | Estilos utilitarios |
-| shadcn/ui + Radix UI | Componentes UI |
-| Recharts | Graficas |
-| Lucide React | Iconos |
+
+| Tecnologia           | Uso                     |
+| -------------------- | ----------------------- |
+| React 19             | UI library              |
+| TypeScript 5.8       | Lenguaje                |
+| Vite 7               | Build tool y dev server |
+| TanStack Router      | Client-side routing     |
+| Tailwind CSS 4       | Estilos utilitarios     |
+| shadcn/ui + Radix UI | Componentes UI          |
+| Recharts             | Graficas                |
+| Lucide React         | Iconos                  |
 
 ### Backend
-| Tecnologia | Uso |
-|---|---|
-| Supabase | PostgreSQL + autenticacion + storage |
-| @supabase/supabase-js | Cliente JS para Supabase |
+
+| Tecnologia            | Uso                                  |
+| --------------------- | ------------------------------------ |
+| Supabase              | PostgreSQL + autenticacion + storage |
+| @supabase/supabase-js | Cliente JS para Supabase             |
 
 ## Funcionalidades
 
@@ -30,9 +32,13 @@ Plataforma SaaS para gestionar citas, clientes y servicios, disenada para profes
 - **Gestion de servicios:** CRUD con categorias, duracion, precio, personal asignado y estado.
 - **Gestion de personal:** CRUD de estilistas, barberos, manicuristas con conteo de citas.
 - **Agenda de citas:** Creacion, edicion y cancelacion de citas con notificaciones.
-- **Notificaciones en tiempo real:** Se crean automaticamente al agendar o cancelar citas.
+- **Notificaciones:** Se crean automaticamente al agendar o cancelar citas y al registrar o eliminar clientes.
 - **100% responsive:** Movil, tablet y escritorio.
 - **En espanol:** Interfaz completa con moneda COP.
+
+> Estado de implementacion abajo en [Estado de implementacion](#estado-de-implementacion):
+> algunas vistas todavia usan datos de demostracion hardcodeados y se estan
+> conectando a Supabase por partes.
 
 ## Inicio rapido
 
@@ -47,30 +53,57 @@ npm run dev
 
 1. Crea un proyecto en [supabase.com](https://supabase.com)
 2. Ve al **SQL Editor** del dashboard
-3. Copia y ejecuta el contenido de `schema.sql`
+3. Copia y ejecuta el contenido de `supabase/database.sql`
 4. Copia tu **Project URL** y **anon key** (Settings > API) al archivo `.env`
 
 ### Credenciales de prueba
 
-| Rol | Email | Contrasena |
-|---|---|---|
-| Admin | admin@salonbella.co | test1234 |
-| Staff | staff@salonbella.co | test1234 |
-| Cliente | client@salonbella.co | test1234 |
+| Rol     | Email                | Contrasena |
+| ------- | -------------------- | ---------- |
+| Admin   | admin@salonbella.co  | test1234   |
+| Staff   | staff@salonbella.co  | test1234   |
+| Cliente | client@salonbella.co | test1234   |
+
+> La cuenta de cliente esta vinculada a la clienta "Valentina Gomez", que tiene
+> citas pasadas y futuras, para que "Mis citas" e "Historial" tengan datos.
+
+Estos usuarios (y toda la data de negocio, clientes, citas, horarios y
+notificaciones) se crean al ejecutar `supabase/database.sql`. Las citas se generan
+con fechas relativas a hoy (ademas de ~1800 citas historicas deterministas de los
+ultimos 365 dias) para que el dashboard y los reportes muestren datos de inmediato.
+
+### Estado de implementacion
+
+| Vista                                   | Estado                                                                  |
+| --------------------------------------- | ----------------------------------------------------------------------- |
+| Dashboard (`/app`)                      | Conectado a Supabase                                                    |
+| Citas `/app/appointments`               | Conectado (CRUD + notificaciones)                                       |
+| Clientes `/app/clients`                 | Conectado (CRUD + historial)                                            |
+| Servicios `/app/services`               | Conectado (CRUD + asignacion de personal)                               |
+| Personal `/app/staff`                   | Conectado (listado + conteo de citas)                                   |
+| Login / Registro / Recuperar contrasena | Conectado a Supabase Auth                                               |
+| Reserva publica `/book`                 | **Demo** (datos hardcodeados)                                           |
+| Estadisticas `/app/statistics`          | Conectado a Supabase (con filtros y exportacion CSV/PDF)                |
+| Reportes `/app/reports`                 | Conectado a Supabase (5 fuentes + exportacion)                          |
+| Configuracion `/app/settings`           | Conectado (perfil, horarios, equipo, notificaciones, marca)             |
+| Mis citas `/app/my-appointments`        | Conectado (citas del cliente logueado + cancelacion)                    |
+| Historial `/app/history`                | Conectado (visitas pasadas del cliente logueado)                        |
+| Mi perfil `/app/profile`                | Conectado (perfil real editable, foto de perfil y cambio de contrasena) |
+| Detalle de cliente `/app/clients/$id`   | **Demo**                                                                |
 
 ### Tablas
 
-| Tabla | Descripcion |
-|---|---|
-| `users` | Usuarios de autenticacion |
-| `profiles` | Nombre, telefono, avatar |
-| `businesses` | Negocios registrados |
-| `staff` | Personal asignado a un negocio |
-| `services` | Servicios ofrecidos |
-| `service_staff` | Relacion servicio <-> personal |
-| `clients` | Clientes del negocio |
-| `appointments` | Citas agendadas |
-| `notifications` | Notificaciones del sistema |
+| Tabla           | Descripcion                              |
+| --------------- | ---------------------------------------- |
+| `users`         | Usuarios de autenticacion                |
+| `profiles`      | Nombre, telefono, ubicacion, bio, avatar |
+| `businesses`    | Negocios registrados                     |
+| `staff`         | Personal asignado a un negocio           |
+| `services`      | Servicios ofrecidos                      |
+| `service_staff` | Relacion servicio <-> personal           |
+| `clients`       | Clientes del negocio                     |
+| `appointments`  | Citas agendadas                          |
+| `notifications` | Notificaciones del sistema               |
 
 ## Despliegue en Vercel
 
@@ -89,9 +122,9 @@ O ver la guia completa en [DEPLOY.md](./DEPLOY.md).
 
 ## Scripts
 
-| Comando | Descripcion |
-|---|---|
-| `npm run dev` | Servidor de desarrollo |
-| `npm run build` | Build de produccion |
+| Comando           | Descripcion            |
+| ----------------- | ---------------------- |
+| `npm run dev`     | Servidor de desarrollo |
+| `npm run build`   | Build de produccion    |
 | `npm run preview` | Vista previa del build |
-| `npm run lint` | Ejecutar ESLint |
+| `npm run lint`    | Ejecutar ESLint        |

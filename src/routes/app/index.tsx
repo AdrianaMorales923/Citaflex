@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { formatMoney } from "@/lib/money";
 import { useEffect, useState } from "react";
 import { Calendar, Users, DollarSign, TrendingUp, Clock, MoreHorizontal } from "lucide-react";
 import supabase from "@/lib/supabase";
@@ -20,10 +21,6 @@ interface UpcomingAppt {
 interface WeekDay {
   label: string;
   count: number;
-}
-
-function formatMoney(n: number) {
-  return "$" + n.toLocaleString("es-CO");
 }
 
 function fmt(d: Date) {
@@ -87,7 +84,8 @@ function Dashboard() {
         .select("*", { count: "exact", head: true });
       const staffCount = staffN ?? 0;
       const totalSlots = staffCount > 0 ? staffCount * 10 : 1;
-      const occPct = staffCount > 0 ? Math.min(100, Math.round(((todayN ?? 0) / totalSlots) * 100)) : 0;
+      const occPct =
+        staffCount > 0 ? Math.min(100, Math.round(((todayN ?? 0) / totalSlots) * 100)) : 0;
       setOccupancy(occPct);
 
       // Upcoming appointments for today (with joins via separate queries)
@@ -121,7 +119,7 @@ function Dashboard() {
             service_name: serviceMap.get(a.service_id) ?? "Servicio",
             staff_name: staffMap.get(a.staff_id) ?? "Staff",
             status: a.status,
-          }))
+          })),
         );
       } else {
         setUpcoming([]);
@@ -157,14 +155,46 @@ function Dashboard() {
   }, []);
 
   const stats = [
-    { label: "Citas hoy", value: String(todayCount), delta: "", icon: Calendar, tone: "text-primary", bg: "bg-primary/10" },
-    { label: "Ingresos del mes", value: formatMoney(monthRevenue), delta: "", icon: DollarSign, tone: "text-success", bg: "bg-success/10" },
-    { label: "Clientes activos", value: String(activeClients), delta: "", icon: Users, tone: "text-chart-5", bg: "bg-chart-5/10" },
-    { label: "Ocupación", value: `${occupancy}%`, delta: "", icon: TrendingUp, tone: "text-chart-2", bg: "bg-chart-2/10" },
+    {
+      label: "Citas hoy",
+      value: String(todayCount),
+      delta: "",
+      icon: Calendar,
+      tone: "text-primary",
+      bg: "bg-primary/10",
+    },
+    {
+      label: "Ingresos del mes",
+      value: formatMoney(monthRevenue),
+      delta: "",
+      icon: DollarSign,
+      tone: "text-success",
+      bg: "bg-success/10",
+    },
+    {
+      label: "Clientes activos",
+      value: String(activeClients),
+      delta: "",
+      icon: Users,
+      tone: "text-chart-5",
+      bg: "bg-chart-5/10",
+    },
+    {
+      label: "Ocupación",
+      value: `${occupancy}%`,
+      delta: "",
+      icon: TrendingUp,
+      tone: "text-chart-2",
+      bg: "bg-chart-2/10",
+    },
   ];
 
   const today = new Date();
-  const dateLabel = today.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
+  const dateLabel = today.toLocaleDateString("es-CO", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 
   return (
     <div className="space-y-6">
@@ -185,12 +215,18 @@ function Dashboard() {
           >
             <div className="bg-gradient-soft pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             <div className="relative flex items-start justify-between">
-              <div className={`grid h-10 w-10 place-items-center rounded-xl ${s.bg} ${s.tone} transition-transform duration-300 group-hover:scale-110`}>
+              <div
+                className={`grid h-10 w-10 place-items-center rounded-xl ${s.bg} ${s.tone} transition-transform duration-300 group-hover:scale-110`}
+              >
                 <s.icon className="h-5 w-5" />
               </div>
             </div>
-            <p className="relative mt-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">{s.label}</p>
-            <p className="relative mt-1 font-display text-2xl font-bold tracking-tight">{loading ? "—" : s.value}</p>
+            <p className="relative mt-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {s.label}
+            </p>
+            <p className="relative mt-1 font-display text-2xl font-bold tracking-tight">
+              {loading ? "—" : s.value}
+            </p>
           </div>
         ))}
       </div>
@@ -203,7 +239,9 @@ function Dashboard() {
               <h3 className="font-display font-semibold">Próximas citas</h3>
               <p className="text-xs text-muted-foreground">Hoy, {dateLabel}</p>
             </div>
-            <button className="rounded-md p-1.5 hover:bg-accent"><MoreHorizontal className="h-4 w-4" /></button>
+            <button className="rounded-md p-1.5 hover:bg-accent">
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
           </div>
           {loading ? (
             <div className="py-12 text-center text-sm text-muted-foreground">Cargando...</div>
@@ -220,11 +258,19 @@ function Dashboard() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{a.client_name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{a.service_name} · {a.staff_name}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {a.service_name} · {a.staff_name}
+                    </p>
                   </div>
-                  <span className={`hidden rounded-full px-2.5 py-1 text-xs font-medium sm:inline-block ${
-                    a.status === "Confirmada" ? "bg-success/10 text-success" : "bg-warning/10 text-warning-foreground"
-                  }`}>{a.status}</span>
+                  <span
+                    className={`hidden rounded-full px-2.5 py-1 text-xs font-medium sm:inline-block ${
+                      a.status === "Confirmada"
+                        ? "bg-success/10 text-success"
+                        : "bg-warning/10 text-warning-foreground"
+                    }`}
+                  >
+                    {a.status}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -240,12 +286,18 @@ function Dashboard() {
                 const maxCount = Math.max(...weekData.map((x) => x.count), 1);
                 const heightPct = (d.count / maxCount) * 100;
                 return (
-                  <div key={i} className="flex-1 rounded-md bg-gradient-to-t from-primary/30 to-primary" style={{ height: `${Math.max(heightPct, 8)}%` }} />
+                  <div
+                    key={i}
+                    className="flex-1 rounded-md bg-gradient-to-t from-primary/30 to-primary"
+                    style={{ height: `${Math.max(heightPct, 8)}%` }}
+                  />
                 );
               })}
             </div>
             <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
-              {weekData.map((d, i) => <span key={i}>{d.label}</span>)}
+              {weekData.map((d, i) => (
+                <span key={i}>{d.label}</span>
+              ))}
             </div>
           </div>
 

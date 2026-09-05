@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { formatMoney } from "@/lib/money";
 import { useState } from "react";
 import {
   ArrowLeft,
@@ -59,108 +60,197 @@ interface ClientDetail {
 
 const clientDb: Record<string, ClientDetail> = {
   "1": {
-    id: "1", name: "María González", phone: "+57 300 123 4567", email: "maria@correo.com",
-    address: "Calle 72 #45-12, Barranquilla", birthday: "15 Marzo", tag: "VIP",
-    visits: 24, totalSpent: 2450000, registeredAt: "15 de enero, 2023",
-    notes: "Cliente muy querida. Prefiere citas por la mañana. Tiene alergia a tintes con amoníaco. Siempre muy puntual y amable con todo el personal.",
+    id: "1",
+    name: "María González",
+    phone: "+57 300 123 4567",
+    email: "maria@correo.com",
+    address: "Calle 72 #45-12, Barranquilla",
+    birthday: "15 Marzo",
+    tag: "VIP",
+    visits: 24,
+    totalSpent: 2450000,
+    registeredAt: "15 de enero, 2023",
+    notes:
+      "Cliente muy querida. Prefiere citas por la mañana. Tiene alergia a tintes con amoníaco. Siempre muy puntual y amable con todo el personal.",
     preferences: ["Mañana (8am-12pm)", "Productos orgánicos / sin amoníaco", "Profesional: Any"],
     allergies: "Amoníaco en tintes capilares. Piel sensible a ciertos productos químicos.",
     referral: "Google Maps",
   },
   "2": {
-    id: "2", name: "Carlos Pérez", phone: "+57 310 555 8888", email: "carlos@correo.com",
-    address: "Carrera 43 #75-90, Barranquilla", birthday: "8 Julio", tag: "Frecuente",
-    visits: 12, totalSpent: 1200000, registeredAt: "3 de marzo, 2024",
-    notes: "Paga siempre en efectivo. Le gusta conversar durante el servicio. Fanático del equipo Junior de Barranquilla.",
+    id: "2",
+    name: "Carlos Pérez",
+    phone: "+57 310 555 8888",
+    email: "carlos@correo.com",
+    address: "Carrera 43 #75-90, Barranquilla",
+    birthday: "8 Julio",
+    tag: "Frecuente",
+    visits: 12,
+    totalSpent: 1200000,
+    registeredAt: "3 de marzo, 2024",
+    notes:
+      "Paga siempre en efectivo. Le gusta conversar durante el servicio. Fanático del equipo Junior de Barranquilla.",
     preferences: ["Pago en efectivo", "Barbero: Juan", "Tarde (2pm-6pm)"],
     allergies: "",
     referral: "Referido por amigo",
   },
   "3": {
-    id: "3", name: "Andrea López", phone: "+57 320 111 2222", email: "andrea@correo.com",
-    address: "Av. Circunvalar #12-34, Barranquilla", birthday: "22 Noviembre", tag: "Frecuente",
-    visits: 8, totalSpent: 850000, registeredAt: "10 de junio, 2024",
+    id: "3",
+    name: "Andrea López",
+    phone: "+57 320 111 2222",
+    email: "andrea@correo.com",
+    address: "Av. Circunvalar #12-34, Barranquilla",
+    birthday: "22 Noviembre",
+    tag: "Frecuente",
+    visits: 8,
+    totalSpent: 850000,
+    registeredAt: "10 de junio, 2024",
     notes: "Muy puntual. Siempre confirma la cita un día antes por WhatsApp.",
     preferences: ["Confirmación previa por WhatsApp", "Tarde (2pm-6pm)", "Servicios de uñas"],
     allergies: "",
     referral: "Instagram",
   },
   "4": {
-    id: "4", name: "Jorge Mendoza", phone: "+57 305 333 4444", email: "jorge@correo.com",
-    address: "Calle 84 #56-78, Barranquilla", birthday: "3 Enero", tag: "Nuevo",
-    visits: 3, totalSpent: 280000, registeredAt: "28 de abril, 2025",
+    id: "4",
+    name: "Jorge Mendoza",
+    phone: "+57 305 333 4444",
+    email: "jorge@correo.com",
+    address: "Calle 84 #56-78, Barranquilla",
+    birthday: "3 Enero",
+    tag: "Nuevo",
+    visits: 3,
+    totalSpent: 280000,
+    registeredAt: "28 de abril, 2025",
     notes: "Nuevo cliente, referido por María González. Interesado en tratamientos capilares.",
     preferences: ["Tratamientos capilares", "Mañana (8am-12pm)"],
     allergies: "",
     referral: "María González",
   },
   "5": {
-    id: "5", name: "Lucía Vargas", phone: "+57 318 666 7777", email: "lucia@correo.com",
-    address: "Carrera 52 #68-90, Barranquilla", birthday: "10 Mayo", tag: "VIP",
-    visits: 18, totalSpent: 1950000, registeredAt: "5 de febrero, 2023",
-    notes: "Cliente desde 2023. Siempre trae café para el equipo. Muy detallista y exigente con los diseños de uñas.",
+    id: "5",
+    name: "Lucía Vargas",
+    phone: "+57 318 666 7777",
+    email: "lucia@correo.com",
+    address: "Carrera 52 #68-90, Barranquilla",
+    birthday: "10 Mayo",
+    tag: "VIP",
+    visits: 18,
+    totalSpent: 1950000,
+    registeredAt: "5 de febrero, 2023",
+    notes:
+      "Cliente desde 2023. Siempre trae café para el equipo. Muy detallista y exigente con los diseños de uñas.",
     preferences: ["Uñas acrílicas", "Diseños elaborados", "Profesional: Valentina", "Sábados"],
     allergies: "Adhesivos de baja calidad",
     referral: "Facebook",
   },
   "6": {
-    id: "6", name: "Ricardo Díaz", phone: "+57 312 999 0000", email: "ricardo@correo.com",
-    address: "Av. Murillo #23-45, Barranquilla", birthday: "18 Agosto", tag: "Nuevo",
-    visits: 1, totalSpent: 95000, registeredAt: "28 de marzo, 2025",
+    id: "6",
+    name: "Ricardo Díaz",
+    phone: "+57 312 999 0000",
+    email: "ricardo@correo.com",
+    address: "Av. Murillo #23-45, Barranquilla",
+    birthday: "18 Agosto",
+    tag: "Nuevo",
+    visits: 1,
+    totalSpent: 95000,
+    registeredAt: "28 de marzo, 2025",
     notes: "Primera visita. Interesado en paquete mensual de barbería.",
     preferences: ["Evaluando paquete mensual"],
     allergies: "",
     referral: "Promoción Instagram",
   },
   "7": {
-    id: "7", name: "Daniela Ríos", phone: "+57 315 444 3333", email: "daniela@correo.com",
-    address: "Calle 93 #41-22, Barranquilla", birthday: "5 Septiembre", tag: "VIP",
-    visits: 32, totalSpent: 3200000, registeredAt: "20 de noviembre, 2022",
-    notes: "Cliente más antigua. Conoce a todo el personal. Celebra su cumpleaños con nosotros cada año.",
+    id: "7",
+    name: "Daniela Ríos",
+    phone: "+57 315 444 3333",
+    email: "daniela@correo.com",
+    address: "Calle 93 #41-22, Barranquilla",
+    birthday: "5 Septiembre",
+    tag: "VIP",
+    visits: 32,
+    totalSpent: 3200000,
+    registeredAt: "20 de noviembre, 2022",
+    notes:
+      "Cliente más antigua. Conoce a todo el personal. Celebra su cumpleaños con nosotros cada año.",
     preferences: ["Sábados", "Profesional: María", "Tratamientos faciales"],
     allergies: "",
     referral: "Volante",
   },
   "8": {
-    id: "8", name: "Fernando Castro", phone: "+57 301 777 8888", email: "fernando@correo.com",
-    address: "Carrera 38 #72-15, Barranquilla", birthday: "12 Abril", tag: "Frecuente",
-    visits: 5, totalSpent: 450000, registeredAt: "15 de agosto, 2024",
+    id: "8",
+    name: "Fernando Castro",
+    phone: "+57 301 777 8888",
+    email: "fernando@correo.com",
+    address: "Carrera 38 #72-15, Barranquilla",
+    birthday: "12 Abril",
+    tag: "Frecuente",
+    visits: 5,
+    totalSpent: 450000,
+    registeredAt: "15 de agosto, 2024",
     notes: "Trabaja por las tardes. Solo puede sábados por la mañana. Muy formal.",
     preferences: ["Sábados mañana", "Corte clásico"],
     allergies: "",
     referral: "Google Maps",
   },
   "9": {
-    id: "9", name: "Sofía Martínez", phone: "+57 304 222 1111", email: "sofia@correo.com",
-    address: "Calle 68 #48-30, Barranquilla", birthday: "30 Junio", tag: "Nuevo",
-    visits: 2, totalSpent: 180000, registeredAt: "27 de marzo, 2025",
+    id: "9",
+    name: "Sofía Martínez",
+    phone: "+57 304 222 1111",
+    email: "sofia@correo.com",
+    address: "Calle 68 #48-30, Barranquilla",
+    birthday: "30 Junio",
+    tag: "Nuevo",
+    visits: 2,
+    totalSpent: 180000,
+    registeredAt: "27 de marzo, 2025",
     notes: "Vino por promoción de Instagram. Le encantó el ambiente.",
     preferences: ["Promociones"],
     allergies: "",
     referral: "Instagram",
   },
   "10": {
-    id: "10", name: "Alejandro Torres", phone: "+57 317 555 6666", email: "alejandro@correo.com",
-    address: "Av. Boyacá #15-60, Barranquilla", birthday: "14 Febrero", tag: "Frecuente",
-    visits: 15, totalSpent: 980000, registeredAt: "1 de febrero, 2024",
+    id: "10",
+    name: "Alejandro Torres",
+    phone: "+57 317 555 6666",
+    email: "alejandro@correo.com",
+    address: "Av. Boyacá #15-60, Barranquilla",
+    birthday: "14 Febrero",
+    tag: "Frecuente",
+    visits: 15,
+    totalSpent: 980000,
+    registeredAt: "1 de febrero, 2024",
     notes: "Siempre llega 10 minutos tarde. Reservar con margen de tiempo.",
     preferences: ["Flexibilidad horaria", "Barba + Corte"],
     allergies: "",
     referral: "Amigo",
   },
   "11": {
-    id: "11", name: "Camila Herrera", phone: "+57 319 888 9999", email: "camila@correo.com",
-    address: "Carrera 46 #80-12, Barranquilla", birthday: "7 Octubre", tag: "Inactivo",
-    visits: 0, totalSpent: 0, registeredAt: "10 de enero, 2025",
-    notes: "Registrada pero nunca ha agendado. Seguimiento pendiente. Mandar promoción de bienvenida.",
+    id: "11",
+    name: "Camila Herrera",
+    phone: "+57 319 888 9999",
+    email: "camila@correo.com",
+    address: "Carrera 46 #80-12, Barranquilla",
+    birthday: "7 Octubre",
+    tag: "Inactivo",
+    visits: 0,
+    totalSpent: 0,
+    registeredAt: "10 de enero, 2025",
+    notes:
+      "Registrada pero nunca ha agendado. Seguimiento pendiente. Mandar promoción de bienvenida.",
     preferences: [],
     allergies: "",
     referral: "Web",
   },
   "12": {
-    id: "12", name: "Mateo Gil", phone: "+57 313 111 2222", email: "mateo@correo.com",
-    address: "Calle 76 #55-44, Barranquilla", birthday: "19 Diciembre", tag: "Frecuente",
-    visits: 6, totalSpent: 520000, registeredAt: "12 de mayo, 2024",
+    id: "12",
+    name: "Mateo Gil",
+    phone: "+57 313 111 2222",
+    email: "mateo@correo.com",
+    address: "Calle 76 #55-44, Barranquilla",
+    birthday: "19 Diciembre",
+    tag: "Frecuente",
+    visits: 6,
+    totalSpent: 520000,
+    registeredAt: "12 de mayo, 2024",
     notes: "Prefiere servicios rápidos. No le gusta esperar. Muy directo.",
     preferences: ["Rapidez", "Corte express"],
     allergies: "",
@@ -170,41 +260,230 @@ const clientDb: Record<string, ClientDetail> = {
 
 const appointmentHistory: Record<string, Appointment[]> = {
   "1": [
-    { id: "a1", date: "25 May 2026", time: "10:00 AM", service: "Coloración y corte", staff: "Valentina", status: "Completada", price: 180000, notes: "Color cobrizo, corte en capas" },
-    { id: "a2", date: "18 May 2026", time: "9:30 AM", service: "Tratamiento hidratante", staff: "María", status: "Completada", price: 120000, notes: "Mascarilla de keratina" },
-    { id: "a3", date: "10 May 2026", time: "11:00 AM", service: "Corte y peinado", staff: "Valentina", status: "Completada", price: 95000, notes: "" },
-    { id: "a4", date: "2 May 2026", time: "10:30 AM", service: "Coloración raíz", staff: "María", status: "Completada", price: 85000, notes: "Retoque de raíz" },
-    { id: "a5", date: "25 Abr 2026", time: "9:00 AM", service: "Corte", staff: "Valentina", status: "Completada", price: 60000, notes: "" },
-    { id: "a6", date: "18 Abr 2026", time: "10:00 AM", service: "Manicure y pedicure", staff: "Carla", status: "Cancelada", price: 70000, notes: "Canceló por enfermedad" },
-    { id: "a7", date: "10 Abr 2026", time: "11:30 AM", service: "Coloración completa", staff: "María", status: "Completada", price: 150000, notes: "Rubio dorado" },
+    {
+      id: "a1",
+      date: "25 May 2026",
+      time: "10:00 AM",
+      service: "Coloración y corte",
+      staff: "Valentina",
+      status: "Completada",
+      price: 180000,
+      notes: "Color cobrizo, corte en capas",
+    },
+    {
+      id: "a2",
+      date: "18 May 2026",
+      time: "9:30 AM",
+      service: "Tratamiento hidratante",
+      staff: "María",
+      status: "Completada",
+      price: 120000,
+      notes: "Mascarilla de keratina",
+    },
+    {
+      id: "a3",
+      date: "10 May 2026",
+      time: "11:00 AM",
+      service: "Corte y peinado",
+      staff: "Valentina",
+      status: "Completada",
+      price: 95000,
+      notes: "",
+    },
+    {
+      id: "a4",
+      date: "2 May 2026",
+      time: "10:30 AM",
+      service: "Coloración raíz",
+      staff: "María",
+      status: "Completada",
+      price: 85000,
+      notes: "Retoque de raíz",
+    },
+    {
+      id: "a5",
+      date: "25 Abr 2026",
+      time: "9:00 AM",
+      service: "Corte",
+      staff: "Valentina",
+      status: "Completada",
+      price: 60000,
+      notes: "",
+    },
+    {
+      id: "a6",
+      date: "18 Abr 2026",
+      time: "10:00 AM",
+      service: "Manicure y pedicure",
+      staff: "Carla",
+      status: "Cancelada",
+      price: 70000,
+      notes: "Canceló por enfermedad",
+    },
+    {
+      id: "a7",
+      date: "10 Abr 2026",
+      time: "11:30 AM",
+      service: "Coloración completa",
+      staff: "María",
+      status: "Completada",
+      price: 150000,
+      notes: "Rubio dorado",
+    },
   ],
   "2": [
-    { id: "b1", date: "21 May 2026", time: "4:00 PM", service: "Corte clásico + barba", staff: "Juan", status: "Completada", price: 45000, notes: "" },
-    { id: "b2", date: "14 May 2026", time: "3:30 PM", service: "Corte clásico", staff: "Juan", status: "Completada", price: 35000, notes: "" },
-    { id: "b3", date: "7 May 2026", time: "5:00 PM", service: "Corte + barba + cejas", staff: "Juan", status: "Completada", price: 55000, notes: "" },
+    {
+      id: "b1",
+      date: "21 May 2026",
+      time: "4:00 PM",
+      service: "Corte clásico + barba",
+      staff: "Juan",
+      status: "Completada",
+      price: 45000,
+      notes: "",
+    },
+    {
+      id: "b2",
+      date: "14 May 2026",
+      time: "3:30 PM",
+      service: "Corte clásico",
+      staff: "Juan",
+      status: "Completada",
+      price: 35000,
+      notes: "",
+    },
+    {
+      id: "b3",
+      date: "7 May 2026",
+      time: "5:00 PM",
+      service: "Corte + barba + cejas",
+      staff: "Juan",
+      status: "Completada",
+      price: 55000,
+      notes: "",
+    },
   ],
   "3": [
-    { id: "c1", date: "14 May 2026", time: "2:00 PM", service: "Uñas acrílicas", staff: "Valentina", status: "Completada", price: 95000, notes: "Diseño floral" },
-    { id: "c2", date: "7 May 2026", time: "3:00 PM", service: "Pedicure spa", staff: "Carla", status: "Completada", price: 55000, notes: "" },
+    {
+      id: "c1",
+      date: "14 May 2026",
+      time: "2:00 PM",
+      service: "Uñas acrílicas",
+      staff: "Valentina",
+      status: "Completada",
+      price: 95000,
+      notes: "Diseño floral",
+    },
+    {
+      id: "c2",
+      date: "7 May 2026",
+      time: "3:00 PM",
+      service: "Pedicure spa",
+      staff: "Carla",
+      status: "Completada",
+      price: 55000,
+      notes: "",
+    },
   ],
   "5": [
-    { id: "d1", date: "27 May 2026", time: "11:00 AM", service: "Uñas acrílicas diseño", staff: "Valentina", status: "Completada", price: 120000, notes: "Diseño 3D con pedrería" },
-    { id: "d2", date: "20 May 2026", time: "10:00 AM", service: "Relleno acrílico", staff: "Valentina", status: "Completada", price: 85000, notes: "" },
-    { id: "d3", date: "13 May 2026", time: "11:30 AM", service: "Manicure permanente", staff: "Carla", status: "Completada", price: 65000, notes: "Rojo vino" },
+    {
+      id: "d1",
+      date: "27 May 2026",
+      time: "11:00 AM",
+      service: "Uñas acrílicas diseño",
+      staff: "Valentina",
+      status: "Completada",
+      price: 120000,
+      notes: "Diseño 3D con pedrería",
+    },
+    {
+      id: "d2",
+      date: "20 May 2026",
+      time: "10:00 AM",
+      service: "Relleno acrílico",
+      staff: "Valentina",
+      status: "Completada",
+      price: 85000,
+      notes: "",
+    },
+    {
+      id: "d3",
+      date: "13 May 2026",
+      time: "11:30 AM",
+      service: "Manicure permanente",
+      staff: "Carla",
+      status: "Completada",
+      price: 65000,
+      notes: "Rojo vino",
+    },
   ],
   "7": [
-    { id: "e1", date: "23 May 2026", time: "10:00 AM", service: "Facial rejuvenecedor", staff: "María", status: "Completada", price: 180000, notes: "" },
-    { id: "e2", date: "16 May 2026", time: "9:30 AM", service: "Tratamiento capilar", staff: "Valentina", status: "Completada", price: 140000, notes: "Botox capilar" },
+    {
+      id: "e1",
+      date: "23 May 2026",
+      time: "10:00 AM",
+      service: "Facial rejuvenecedor",
+      staff: "María",
+      status: "Completada",
+      price: 180000,
+      notes: "",
+    },
+    {
+      id: "e2",
+      date: "16 May 2026",
+      time: "9:30 AM",
+      service: "Tratamiento capilar",
+      staff: "Valentina",
+      status: "Completada",
+      price: 140000,
+      notes: "Botox capilar",
+    },
   ],
   "8": [
-    { id: "f1", date: "7 May 2026", time: "9:00 AM", service: "Corte clásico", staff: "Juan", status: "Completada", price: 35000, notes: "" },
+    {
+      id: "f1",
+      date: "7 May 2026",
+      time: "9:00 AM",
+      service: "Corte clásico",
+      staff: "Juan",
+      status: "Completada",
+      price: 35000,
+      notes: "",
+    },
   ],
   "10": [
-    { id: "g1", date: "13 May 2026", time: "5:00 PM", service: "Corte + barba", staff: "Juan", status: "Completada", price: 45000, notes: "Llegó 10 min tarde" },
-    { id: "g2", date: "6 May 2026", time: "4:30 PM", service: "Corte", staff: "Juan", status: "Completada", price: 35000, notes: "" },
+    {
+      id: "g1",
+      date: "13 May 2026",
+      time: "5:00 PM",
+      service: "Corte + barba",
+      staff: "Juan",
+      status: "Completada",
+      price: 45000,
+      notes: "Llegó 10 min tarde",
+    },
+    {
+      id: "g2",
+      date: "6 May 2026",
+      time: "4:30 PM",
+      service: "Corte",
+      staff: "Juan",
+      status: "Completada",
+      price: 35000,
+      notes: "",
+    },
   ],
   "12": [
-    { id: "h1", date: "30 Abr 2026", time: "2:00 PM", service: "Corte express", staff: "Juan", status: "Completada", price: 30000, notes: "" },
+    {
+      id: "h1",
+      date: "30 Abr 2026",
+      time: "2:00 PM",
+      service: "Corte express",
+      staff: "Juan",
+      status: "Completada",
+      price: 30000,
+      notes: "",
+    },
   ],
 };
 
@@ -230,10 +509,6 @@ const statusIcon: Record<ApptStatus, typeof CheckCircle2> = {
   Cancelada: Ban,
   "No-show": AlertCircle,
 };
-
-function formatMoney(n: number) {
-  return "$" + n.toLocaleString("es-CO");
-}
 
 function ClientAvatar({ name, size = 40 }: { name: string; size?: number }) {
   const initials = name
@@ -286,7 +561,10 @@ function ClientProfile() {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="font-display text-xl font-bold sm:text-2xl">{client.name}</h1>
-            <Badge variant="outline" className={`text-[10px] font-semibold uppercase tracking-wider ${tagStyles[client.tag]}`}>
+            <Badge
+              variant="outline"
+              className={`text-[10px] font-semibold uppercase tracking-wider ${tagStyles[client.tag]}`}
+            >
               {client.tag}
             </Badge>
           </div>
@@ -350,9 +628,15 @@ function ClientProfile() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full justify-start rounded-xl bg-muted/50 p-1 sm:w-auto">
-          <TabsTrigger value="info" className="rounded-lg text-sm">Información</TabsTrigger>
-          <TabsTrigger value="history" className="rounded-lg text-sm">Historial de citas</TabsTrigger>
-          <TabsTrigger value="notes" className="rounded-lg text-sm">Notas y preferencias</TabsTrigger>
+          <TabsTrigger value="info" className="rounded-lg text-sm">
+            Información
+          </TabsTrigger>
+          <TabsTrigger value="history" className="rounded-lg text-sm">
+            Historial de citas
+          </TabsTrigger>
+          <TabsTrigger value="notes" className="rounded-lg text-sm">
+            Notas y preferencias
+          </TabsTrigger>
         </TabsList>
 
         {/* Info Tab */}
@@ -401,7 +685,10 @@ function ClientProfile() {
               {client.preferences.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {client.preferences.map((pref) => (
-                    <span key={pref} className="inline-flex items-center gap-1 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-foreground">
+                    <span
+                      key={pref}
+                      className="inline-flex items-center gap-1 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-foreground"
+                    >
                       <Star className="h-3 w-3" /> {pref}
                     </span>
                   ))}
@@ -451,7 +738,10 @@ function ClientProfile() {
                       {appointments.map((a) => {
                         const StatusIcon = statusIcon[a.status];
                         return (
-                          <tr key={a.id} className="border-b border-border transition-colors hover:bg-muted/40">
+                          <tr
+                            key={a.id}
+                            className="border-b border-border transition-colors hover:bg-muted/40"
+                          >
                             <td className="px-4 py-3">
                               <div className="font-medium">{a.date}</div>
                               <div className="text-xs text-muted-foreground">{a.time}</div>
@@ -459,11 +749,16 @@ function ClientProfile() {
                             <td className="px-4 py-3 font-medium">{a.service}</td>
                             <td className="px-4 py-3 text-muted-foreground">{a.staff}</td>
                             <td className="px-4 py-3">
-                              <Badge variant="outline" className={`gap-1 text-[10px] font-semibold uppercase ${statusStyles[a.status]}`}>
+                              <Badge
+                                variant="outline"
+                                className={`gap-1 text-[10px] font-semibold uppercase ${statusStyles[a.status]}`}
+                              >
                                 <StatusIcon className="h-3 w-3" /> {a.status}
                               </Badge>
                             </td>
-                            <td className="px-4 py-3 text-right font-medium">{formatMoney(a.price)}</td>
+                            <td className="px-4 py-3 text-right font-medium">
+                              {formatMoney(a.price)}
+                            </td>
                           </tr>
                         );
                       })}
@@ -477,13 +772,21 @@ function ClientProfile() {
                 {appointments.map((a) => {
                   const StatusIcon = statusIcon[a.status];
                   return (
-                    <div key={a.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                    <div
+                      key={a.id}
+                      className="rounded-2xl border border-border bg-card p-4 shadow-sm"
+                    >
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="font-display font-semibold">{a.service}</p>
-                          <p className="text-xs text-muted-foreground">{a.date} · {a.time}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {a.date} · {a.time}
+                          </p>
                         </div>
-                        <Badge variant="outline" className={`gap-1 text-[10px] font-semibold uppercase ${statusStyles[a.status]}`}>
+                        <Badge
+                          variant="outline"
+                          className={`gap-1 text-[10px] font-semibold uppercase ${statusStyles[a.status]}`}
+                        >
                           <StatusIcon className="h-3 w-3" /> {a.status}
                         </Badge>
                       </div>
@@ -492,7 +795,9 @@ function ClientProfile() {
                         <span className="font-semibold">{formatMoney(a.price)}</span>
                       </div>
                       {a.notes && (
-                        <p className="mt-2 rounded-lg bg-muted/50 p-2 text-xs text-muted-foreground">{a.notes}</p>
+                        <p className="mt-2 rounded-lg bg-muted/50 p-2 text-xs text-muted-foreground">
+                          {a.notes}
+                        </p>
                       )}
                     </div>
                   );
@@ -542,7 +847,9 @@ function ClientProfile() {
                   <span>{client.allergies}</span>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Sin alergias ni advertencias registradas.</p>
+                <p className="text-sm text-muted-foreground">
+                  Sin alergias ni advertencias registradas.
+                </p>
               )}
             </div>
           </div>
@@ -558,30 +865,48 @@ function ClientProfile() {
           <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto">
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Nombre completo</label>
-              <input defaultValue={client.name} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+              <input
+                defaultValue={client.name}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Teléfono</label>
-                <input defaultValue={client.phone} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                <input
+                  defaultValue={client.phone}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Email</label>
-                <input defaultValue={client.email} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                <input
+                  defaultValue={client.email}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
               </div>
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Dirección</label>
-              <input defaultValue={client.address} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+              <input
+                defaultValue={client.address}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Cumpleaños</label>
-                <input defaultValue={client.birthday} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                <input
+                  defaultValue={client.birthday}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Etiqueta</label>
-                <select defaultValue={client.tag} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                <select
+                  defaultValue={client.tag}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
                   <option>VIP</option>
                   <option>Frecuente</option>
                   <option>Nuevo</option>
@@ -591,16 +916,31 @@ function ClientProfile() {
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Alergias / Advertencias</label>
-              <input defaultValue={client.allergies} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Ej. Alergia a tintes con amoníaco" />
+              <input
+                defaultValue={client.allergies}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                placeholder="Ej. Alergia a tintes con amoníaco"
+              />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Notas</label>
-              <textarea defaultValue={client.notes} className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+              <textarea
+                defaultValue={client.notes}
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <button onClick={() => setEditOpen(false)} className="rounded-lg border border-input px-4 py-2 text-sm font-medium hover:bg-muted">Cancelar</button>
-            <button onClick={() => setEditOpen(false)} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+            <button
+              onClick={() => setEditOpen(false)}
+              className="rounded-lg border border-input px-4 py-2 text-sm font-medium hover:bg-muted"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => setEditOpen(false)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+            >
               <Save className="h-4 w-4" /> Guardar cambios
             </button>
           </div>

@@ -132,7 +132,9 @@ export function AppTopbar({ onMenuClick, title }: { onMenuClick: () => void; tit
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <p className="truncate text-sm font-semibold">{n.title}</p>
-                          {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />}
+                          {!n.read && (
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                          )}
                         </div>
                         <p className="line-clamp-2 text-xs text-muted-foreground">
                           {n.description}
@@ -167,7 +169,10 @@ export function AppTopbar({ onMenuClick, title }: { onMenuClick: () => void; tit
         </button>
 
         <button
-          onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
+          onClick={async () => {
+            await signOut();
+            navigate({ to: "/login" });
+          }}
           className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card transition-all hover:bg-destructive/10 hover:text-destructive hover:shadow-sm active:scale-95"
           aria-label="Cerrar sesión"
         >

@@ -36,7 +36,10 @@ function ForgotPassword() {
           : "Ingresa tu correo y te enviaremos un enlace para crear una nueva."
       }
       footer={
-        <Link to="/login" className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline">
+        <Link
+          to="/login"
+          className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"
+        >
           <ArrowLeft className="h-3.5 w-3.5" /> Volver al inicio de sesión
         </Link>
       }
@@ -51,7 +54,10 @@ function ForgotPassword() {
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             ¿No lo recibes? Revisa tu carpeta de spam o{" "}
-            <button onClick={() => setSent(false)} className="font-medium text-primary hover:underline">
+            <button
+              onClick={() => setSent(false)}
+              className="font-medium text-primary hover:underline"
+            >
               prueba con otro correo
             </button>
             .

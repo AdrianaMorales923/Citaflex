@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { formatMoney } from "@/lib/money";
 import { useEffect, useMemo, useState } from "react";
 import {
   Plus,
@@ -73,15 +74,60 @@ interface Service {
 
 // ---------- Category metadata ----------
 const CATEGORIES = [
-  { label: "Cabello", icon: Scissors, color: "bg-primary/10 text-primary", border: "border-primary/20" },
-  { label: "Uñas", icon: Sparkles, color: "bg-chart-5/10 text-chart-5", border: "border-chart-5/20" },
-  { label: "Barbería", icon: Scissors, color: "bg-chart-3/10 text-chart-3", border: "border-chart-3/20" },
-  { label: "Estética", icon: Heart, color: "bg-chart-2/10 text-chart-2", border: "border-chart-2/20" },
-  { label: "Salud", icon: Stethoscope, color: "bg-success/10 text-success", border: "border-success/20" },
-  { label: "Belleza", icon: Palette, color: "bg-chart-4/10 text-chart-4", border: "border-chart-4/20" },
-  { label: "Fotografía", icon: Camera, color: "bg-chart-1/10 text-chart-1", border: "border-chart-1/20" },
-  { label: "Fitness", icon: Dumbbell, color: "bg-warning/10 text-warning-foreground", border: "border-warning/30" },
-  { label: "Consultoría", icon: MessageSquare, color: "bg-secondary/20 text-secondary-foreground", border: "border-secondary/30" },
+  {
+    label: "Cabello",
+    icon: Scissors,
+    color: "bg-primary/10 text-primary",
+    border: "border-primary/20",
+  },
+  {
+    label: "Uñas",
+    icon: Sparkles,
+    color: "bg-chart-5/10 text-chart-5",
+    border: "border-chart-5/20",
+  },
+  {
+    label: "Barbería",
+    icon: Scissors,
+    color: "bg-chart-3/10 text-chart-3",
+    border: "border-chart-3/20",
+  },
+  {
+    label: "Estética",
+    icon: Heart,
+    color: "bg-chart-2/10 text-chart-2",
+    border: "border-chart-2/20",
+  },
+  {
+    label: "Salud",
+    icon: Stethoscope,
+    color: "bg-success/10 text-success",
+    border: "border-success/20",
+  },
+  {
+    label: "Belleza",
+    icon: Palette,
+    color: "bg-chart-4/10 text-chart-4",
+    border: "border-chart-4/20",
+  },
+  {
+    label: "Fotografía",
+    icon: Camera,
+    color: "bg-chart-1/10 text-chart-1",
+    border: "border-chart-1/20",
+  },
+  {
+    label: "Fitness",
+    icon: Dumbbell,
+    color: "bg-warning/10 text-warning-foreground",
+    border: "border-warning/30",
+  },
+  {
+    label: "Consultoría",
+    icon: MessageSquare,
+    color: "bg-secondary/20 text-secondary-foreground",
+    border: "border-secondary/30",
+  },
 ];
 
 function categoryMeta(label: string) {
@@ -89,10 +135,6 @@ function categoryMeta(label: string) {
 }
 
 // ---------- Helpers ----------
-function formatMoney(n: number) {
-  return "$" + n.toLocaleString("es-CO");
-}
-
 function formatDuration(mins: number) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
@@ -102,7 +144,17 @@ function formatDuration(mins: number) {
 }
 
 // ---------- Components ----------
-function StatCard({ label, value, icon: Icon, accent }: { label: string; value: string; icon: typeof Users; accent: string }) {
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  accent,
+}: {
+  label: string;
+  value: string;
+  icon: typeof Users;
+  accent: string;
+}) {
   return (
     <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg ${accent}`}>
@@ -165,9 +217,11 @@ function Services() {
         description: s.description ?? "",
         staffIds: staffMap.get(s.id) ?? [],
         status: (s.status ?? "Activo") as ServiceStatus,
-      }))
+      })),
     );
-    setStaffList((staffRes.data ?? []).map((s) => ({ id: s.id, name: s.name, role: s.role ?? "" })));
+    setStaffList(
+      (staffRes.data ?? []).map((s) => ({ id: s.id, name: s.name, role: s.role ?? "" })),
+    );
     setLoading(false);
   };
 
@@ -176,7 +230,7 @@ function Services() {
   }, []);
 
   const filtered = useMemo(() => {
-    let list = services.filter((s) => {
+    const list = services.filter((s) => {
       const q = search.toLowerCase();
       const matchSearch =
         s.name.toLowerCase().includes(q) ||
@@ -192,9 +246,10 @@ function Services() {
   const activeCount = services.filter((s) => s.status === "Activo").length;
   const inactiveCount = services.filter((s) => s.status === "Inactivo").length;
   const totalRevenue = services.reduce((sum, s) => sum + (s.status === "Activo" ? s.price : 0), 0);
-  const avgDuration = services.length > 0
-    ? Math.round(services.reduce((sum, s) => sum + s.duration, 0) / services.length)
-    : 0;
+  const avgDuration =
+    services.length > 0
+      ? Math.round(services.reduce((sum, s) => sum + s.duration, 0) / services.length)
+      : 0;
 
   const resetForm = () => {
     setFormName("");
@@ -227,12 +282,24 @@ function Services() {
   };
 
   const validateForm = (): boolean => {
-    if (!formName.trim()) { setFormError("El nombre del servicio es obligatorio."); return false; }
-    if (!formCategory.trim()) { setFormError("Selecciona una categoría."); return false; }
+    if (!formName.trim()) {
+      setFormError("El nombre del servicio es obligatorio.");
+      return false;
+    }
+    if (!formCategory.trim()) {
+      setFormError("Selecciona una categoría.");
+      return false;
+    }
     const duration = parseInt(formDuration, 10);
-    if (isNaN(duration) || duration <= 0) { setFormError("La duración debe ser mayor a 0 minutos."); return false; }
+    if (isNaN(duration) || duration <= 0) {
+      setFormError("La duración debe ser mayor a 0 minutos.");
+      return false;
+    }
     const price = parseInt(formPrice, 10);
-    if (isNaN(price) || price < 0) { setFormError("El precio no puede ser negativo."); return false; }
+    if (isNaN(price) || price < 0) {
+      setFormError("El precio no puede ser negativo.");
+      return false;
+    }
     setFormError("");
     return true;
   };
@@ -251,24 +318,30 @@ function Services() {
 
     if (editing) {
       const { error } = await supabase.from("services").update(payload).eq("id", editing.id);
-      if (error) { toast.error("Error: " + error.message); return; }
+      if (error) {
+        toast.error("Error: " + error.message);
+        return;
+      }
 
       // Update staff assignments
       await supabase.from("service_staff").delete().eq("service_id", editing.id);
       if (formStaffIds.length > 0) {
-        await supabase.from("service_staff").insert(
-          formStaffIds.map((sid) => ({ service_id: editing.id, staff_id: sid }))
-        );
+        await supabase
+          .from("service_staff")
+          .insert(formStaffIds.map((sid) => ({ service_id: editing.id, staff_id: sid })));
       }
       toast.success("Servicio actualizado");
     } else {
       const { data, error } = await supabase.from("services").insert(payload).select("id").single();
-      if (error) { toast.error("Error: " + error.message); return; }
+      if (error) {
+        toast.error("Error: " + error.message);
+        return;
+      }
 
       if (data && formStaffIds.length > 0) {
-        await supabase.from("service_staff").insert(
-          formStaffIds.map((sid) => ({ service_id: data.id, staff_id: sid }))
-        );
+        await supabase
+          .from("service_staff")
+          .insert(formStaffIds.map((sid) => ({ service_id: data.id, staff_id: sid })));
       }
       toast.success("Servicio creado");
     }
@@ -289,9 +362,7 @@ function Services() {
   };
 
   const toggleStaff = (id: string) => {
-    setFormStaffIds((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
-    );
+    setFormStaffIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
   };
 
   return (
@@ -300,7 +371,9 @@ function Services() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="font-display text-2xl font-bold">Servicios</h2>
-          <p className="text-sm text-muted-foreground">Gestiona precios, duración, categorías y asignación de personal.</p>
+          <p className="text-sm text-muted-foreground">
+            Gestiona precios, duración, categorías y asignación de personal.
+          </p>
         </div>
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4" /> Nuevo servicio
@@ -309,10 +382,30 @@ function Services() {
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Servicios activos" value={loading ? "—" : String(activeCount)} icon={CheckCircle2} accent="bg-success/10 text-success" />
-        <StatCard label="Servicios inactivos" value={loading ? "—" : String(inactiveCount)} icon={Package} accent="bg-muted text-muted-foreground" />
-        <StatCard label="Ingreso potencial" value={loading ? "—" : formatMoney(totalRevenue)} icon={DollarSign} accent="bg-chart-2/10 text-chart-2" />
-        <StatCard label="Duración promedio" value={loading ? "—" : formatDuration(avgDuration)} icon={Clock} accent="bg-primary/10 text-primary" />
+        <StatCard
+          label="Servicios activos"
+          value={loading ? "—" : String(activeCount)}
+          icon={CheckCircle2}
+          accent="bg-success/10 text-success"
+        />
+        <StatCard
+          label="Servicios inactivos"
+          value={loading ? "—" : String(inactiveCount)}
+          icon={Package}
+          accent="bg-muted text-muted-foreground"
+        />
+        <StatCard
+          label="Ingreso potencial"
+          value={loading ? "—" : formatMoney(totalRevenue)}
+          icon={DollarSign}
+          accent="bg-chart-2/10 text-chart-2"
+        />
+        <StatCard
+          label="Duración promedio"
+          value={loading ? "—" : formatDuration(avgDuration)}
+          icon={Clock}
+          accent="bg-primary/10 text-primary"
+        />
       </div>
 
       {/* Toolbar */}
@@ -344,7 +437,9 @@ function Services() {
             >
               <option value="Todas">Todas las categorías</option>
               {CATEGORIES.map((c) => (
-                <option key={c.label} value={c.label}>{c.label}</option>
+                <option key={c.label} value={c.label}>
+                  {c.label}
+                </option>
               ))}
             </select>
           </div>
@@ -384,24 +479,36 @@ function Services() {
                 const CatIcon = meta.icon;
                 const assignedStaff = staffList.filter((st) => s.staffIds.includes(st.id));
                 return (
-                  <tr key={s.id} className="border-b border-border transition-colors hover:bg-muted/40">
+                  <tr
+                    key={s.id}
+                    className="border-b border-border transition-colors hover:bg-muted/40"
+                  >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${meta.color}`}>
+                        <div
+                          className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${meta.color}`}
+                        >
                           <CatIcon className="h-4 w-4" />
                         </div>
                         <div>
                           <p className="font-display font-medium">{s.name}</p>
-                          <p className="max-w-[220px] truncate text-xs text-muted-foreground">{s.description}</p>
+                          <p className="max-w-[220px] truncate text-xs text-muted-foreground">
+                            {s.description}
+                          </p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant="outline" className={`text-[10px] font-semibold uppercase tracking-wider ${meta.color} ${meta.border}`}>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] font-semibold uppercase tracking-wider ${meta.color} ${meta.border}`}
+                      >
                         {s.category}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-right font-medium">{formatDuration(s.duration)}</td>
+                    <td className="px-4 py-3 text-right font-medium">
+                      {formatDuration(s.duration)}
+                    </td>
                     <td className="px-4 py-3 text-right font-semibold">{formatMoney(s.price)}</td>
                     <td className="px-4 py-3 text-center">
                       {assignedStaff.length > 0 ? (
@@ -414,12 +521,16 @@ function Services() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
-                        s.status === "Activo"
-                          ? "bg-success/10 text-success border border-success/20"
-                          : "bg-muted text-muted-foreground border border-border"
-                      }`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${s.status === "Activo" ? "bg-success" : "bg-muted-foreground"}`} />
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+                          s.status === "Activo"
+                            ? "bg-success/10 text-success border border-success/20"
+                            : "bg-muted text-muted-foreground border border-border"
+                        }`}
+                      >
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${s.status === "Activo" ? "bg-success" : "bg-muted-foreground"}`}
+                        />
                         {s.status}
                       </span>
                     </td>
@@ -467,22 +578,31 @@ function Services() {
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-3">
-                  <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${meta.color}`}>
+                  <div
+                    className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${meta.color}`}
+                  >
                     <CatIcon className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
                     <p className="truncate font-display font-semibold">{s.name}</p>
-                    <Badge variant="outline" className={`mt-1 text-[10px] font-semibold uppercase ${meta.color} ${meta.border}`}>
+                    <Badge
+                      variant="outline"
+                      className={`mt-1 text-[10px] font-semibold uppercase ${meta.color} ${meta.border}`}
+                    >
                       {s.category}
                     </Badge>
                   </div>
                 </div>
-                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                  s.status === "Activo"
-                    ? "bg-success/10 text-success border border-success/20"
-                    : "bg-muted text-muted-foreground border border-border"
-                }`}>
-                  <span className={`h-1.5 w-1.5 rounded-full ${s.status === "Activo" ? "bg-success" : "bg-muted-foreground"}`} />
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                    s.status === "Activo"
+                      ? "bg-success/10 text-success border border-success/20"
+                      : "bg-muted text-muted-foreground border border-border"
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${s.status === "Activo" ? "bg-success" : "bg-muted-foreground"}`}
+                  />
                   {s.status}
                 </span>
               </div>
@@ -505,7 +625,10 @@ function Services() {
               {assignedStaff.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {assignedStaff.map((st) => (
-                    <span key={st.id} className="rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-secondary-foreground">
+                    <span
+                      key={st.id}
+                      className="rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-secondary-foreground"
+                    >
                       {st.name}
                     </span>
                   ))}
@@ -516,7 +639,12 @@ function Services() {
                 <Button variant="outline" size="sm" className="flex-1" onClick={() => openEdit(s)}>
                   <Pencil className="mr-1 h-3.5 w-3.5" /> Editar
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1 text-destructive hover:bg-destructive/10" onClick={() => setDeleteTarget(s)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 text-destructive hover:bg-destructive/10"
+                  onClick={() => setDeleteTarget(s)}
+                >
                   <Trash2 className="mr-1 h-3.5 w-3.5" /> Eliminar
                 </Button>
               </div>
@@ -533,7 +661,12 @@ function Services() {
       </div>
 
       {/* Create / Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) setDialogOpen(false); }}>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(o) => {
+          if (!o) setDialogOpen(false);
+        }}
+      >
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editing ? "Editar servicio" : "Nuevo servicio"}</DialogTitle>
@@ -571,7 +704,9 @@ function Services() {
                   className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-1 focus:ring-ring"
                 >
                   {CATEGORIES.map((c) => (
-                    <option key={c.label} value={c.label}>{c.label}</option>
+                    <option key={c.label} value={c.label}>
+                      {c.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -653,10 +788,10 @@ function Services() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={saveService}>
-              {editing ? "Guardar cambios" : "Crear servicio"}
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancelar
             </Button>
+            <Button onClick={saveService}>{editing ? "Guardar cambios" : "Crear servicio"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -667,8 +802,9 @@ function Services() {
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar servicio</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Estás seguro de eliminar <span className="font-semibold text-foreground">{deleteTarget?.name}</span>?
-              Esta acción no se puede deshacer.
+              ¿Estás seguro de eliminar{" "}
+              <span className="font-semibold text-foreground">{deleteTarget?.name}</span>? Esta
+              acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

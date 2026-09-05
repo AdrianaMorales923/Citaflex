@@ -50,7 +50,7 @@ function AppLayoutWrapper() {
 
 function AppLayout() {
   const [open, setOpen] = useState(false);
-  const path = useRouterState({ select: s => s.location.pathname });
+  const path = useRouterState({ select: (s) => s.location.pathname });
   const { can, role } = useRole();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -61,7 +61,9 @@ function AppLayout() {
     }
   }, [user, loading, navigate]);
 
-  const routeMatch = ROUTE_PERMISSIONS.find(r => r.exact ? path === r.prefix : path.startsWith(r.prefix));
+  const routeMatch = ROUTE_PERMISSIONS.find((r) =>
+    r.exact ? path === r.prefix : path.startsWith(r.prefix),
+  );
   const allowed = routeMatch ? can(routeMatch.perm) : true;
 
   // Auto-redirect clients away from admin dashboard to their home
@@ -81,8 +83,7 @@ function AppLayout() {
 
   if (!user) return null;
 
-  const title =
-    titles[path] ?? (path.startsWith("/app/clients/") ? "Cliente" : "Citaflex");
+  const title = titles[path] ?? (path.startsWith("/app/clients/") ? "Cliente" : "Citaflex");
 
   return (
     <div className="flex min-h-screen bg-muted/30">
@@ -108,7 +109,8 @@ function NoAccess() {
       </div>
       <h2 className="font-display text-xl font-bold">Acceso restringido</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Esta sección no está disponible para el rol <strong>{role}</strong>. Usa el selector de rol en la esquina superior derecha para cambiar la vista de demostración.
+        Esta sección no está disponible para el rol <strong>{role}</strong>. Usa el selector de rol
+        en la esquina superior derecha para cambiar la vista de demostración.
       </p>
     </div>
   );

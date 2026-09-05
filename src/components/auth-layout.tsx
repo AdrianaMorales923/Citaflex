@@ -51,13 +51,24 @@ export function AuthLayout({ title, subtitle, children, footer, quote }: AuthLay
 
           <div className="space-y-8">
             <div className="grid gap-3">
-              <FeatureRow icon={<Sparkles className="h-4 w-4" />} text="Agenda inteligente con recordatorios automáticos" />
-              <FeatureRow icon={<Users className="h-4 w-4" />} text="Tus clientes reservan en segundos, sin llamadas" />
-              <FeatureRow icon={<ShieldCheck className="h-4 w-4" />} text="Datos seguros y cumplimiento desde el día uno" />
+              <FeatureRow
+                icon={<Sparkles className="h-4 w-4" />}
+                text="Agenda inteligente con recordatorios automáticos"
+              />
+              <FeatureRow
+                icon={<Users className="h-4 w-4" />}
+                text="Tus clientes reservan en segundos, sin llamadas"
+              />
+              <FeatureRow
+                icon={<ShieldCheck className="h-4 w-4" />}
+                text="Datos seguros y cumplimiento desde el día uno"
+              />
             </div>
 
             <blockquote className="border-l-2 border-white/30 pl-4">
-              <p className="font-display text-xl font-semibold leading-snug">"{defaultQuote.text}"</p>
+              <p className="font-display text-xl font-semibold leading-snug">
+                "{defaultQuote.text}"
+              </p>
               <footer className="mt-3 text-sm opacity-80">— {defaultQuote.author}</footer>
             </blockquote>
           </div>
@@ -70,7 +81,9 @@ export function AuthLayout({ title, subtitle, children, footer, quote }: AuthLay
 function FeatureRow({ icon, text }: { icon: ReactNode; text: string }) {
   return (
     <div className="flex items-start gap-3 text-sm">
-      <div className="mt-0.5 grid h-7 w-7 place-items-center rounded-md bg-white/15 backdrop-blur">{icon}</div>
+      <div className="mt-0.5 grid h-7 w-7 place-items-center rounded-md bg-white/15 backdrop-blur">
+        {icon}
+      </div>
       <span className="opacity-90">{text}</span>
     </div>
   );

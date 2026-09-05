@@ -1,6 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowRight, Briefcase, Building2, Lock, Mail, ShieldCheck, User, UserCircle2 } from "lucide-react";
+import {
+  ArrowRight,
+  Briefcase,
+  Building2,
+  Lock,
+  Mail,
+  ShieldCheck,
+  User,
+  UserCircle2,
+} from "lucide-react";
 
 import { AuthLayout } from "@/components/auth-layout";
 import { Field, usePasswordStrength, validateEmail } from "@/components/auth-fields";
@@ -63,12 +72,16 @@ function Register() {
     setLoading(true);
     const err = await signUp(email, password);
     if (err) {
-      setErrors({ auth: err === "User already registered" ? "Este correo ya está registrado" : err });
+      setErrors({
+        auth: err === "User already registered" ? "Este correo ya está registrado" : err,
+      });
       setLoading(false);
       return;
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     const user = session?.user;
     if (user) {
       await supabase.from("users").insert({
@@ -84,7 +97,11 @@ function Register() {
       });
     }
 
-    try { window.localStorage.setItem("citaflex.role", role); } catch { /* noop */ }
+    try {
+      window.localStorage.setItem("citaflex.role", role);
+    } catch {
+      /* noop */
+    }
     const dest = role === "client" ? "/app/my-appointments" : "/app";
     navigate({ to: dest });
   }
@@ -122,7 +139,9 @@ function Register() {
                 >
                   <div
                     className={`grid h-9 w-9 place-items-center rounded-md ${
-                      active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                      active
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -224,10 +243,14 @@ function Register() {
             .
           </span>
         </label>
-        {errors.accept && <p className="-mt-3 text-xs font-medium text-destructive">{errors.accept}</p>}
+        {errors.accept && (
+          <p className="-mt-3 text-xs font-medium text-destructive">{errors.accept}</p>
+        )}
 
         {errors.auth && (
-          <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">{errors.auth}</p>
+          <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+            {errors.auth}
+          </p>
         )}
 
         <button

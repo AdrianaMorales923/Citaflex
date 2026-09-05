@@ -42,3 +42,6 @@ tsconfig.tsbuildinfo
 # Supabase skills (generated)
 .agents/
 skills-lock.json
+
+# Supabase SQL File
+supabase/

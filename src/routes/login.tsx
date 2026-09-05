@@ -37,11 +37,17 @@ function Login() {
     setLoading(true);
     const err = await signIn(email, password);
     if (err) {
-      setErrors({ auth: err === "Invalid login credentials" ? "Correo o contraseña incorrectos" : err });
+      setErrors({
+        auth: err === "Invalid login credentials" ? "Correo o contraseña incorrectos" : err,
+      });
       setLoading(false);
       return;
     }
-    try { window.localStorage.setItem("citaflex.role", role); } catch { /* noop */ }
+    try {
+      window.localStorage.setItem("citaflex.role", role);
+    } catch {
+      /* noop */
+    }
     const dest = role === "client" ? "/app/my-appointments" : "/app";
     navigate({ to: dest });
   }
@@ -77,7 +83,9 @@ function Login() {
                       : "border-input hover:border-primary/40 hover:bg-accent/40"
                   }`}
                 >
-                  <Icon className={`h-4 w-4 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                  <Icon
+                    className={`h-4 w-4 ${active ? "text-primary" : "text-muted-foreground"}`}
+                  />
                   <span className="text-xs font-semibold leading-tight">{r.label}</span>
                   <span className="text-[10px] leading-tight text-muted-foreground">{r.desc}</span>
                 </button>
@@ -117,7 +125,9 @@ function Login() {
         </div>
 
         {errors.auth && (
-          <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">{errors.auth}</p>
+          <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+            {errors.auth}
+          </p>
         )}
 
         <button

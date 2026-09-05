@@ -13,7 +13,13 @@ import {
 import { cn } from "@/lib/utils";
 import { useRole, type Role } from "@/lib/role-context";
 
-type Item = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; external?: boolean };
+type Item = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  exact?: boolean;
+  external?: boolean;
+};
 
 const ITEMS: Record<Role, Item[]> = {
   admin: [
@@ -38,7 +44,7 @@ const ITEMS: Record<Role, Item[]> = {
 };
 
 export function MobileNav() {
-  const path = useRouterState({ select: s => s.location.pathname });
+  const path = useRouterState({ select: (s) => s.location.pathname });
   const { role } = useRole();
   const items = ITEMS[role];
   return (
@@ -46,8 +52,11 @@ export function MobileNav() {
       className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
       aria-label="Navegación principal"
     >
-      <ul className={cn("grid", `grid-cols-${items.length}`)} style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
-        {items.map(item => {
+      <ul
+        className={cn("grid", `grid-cols-${items.length}`)}
+        style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+      >
+        {items.map((item) => {
           const active = item.exact ? path === item.to : path.startsWith(item.to);
           const cls = cn(
             "flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors",
@@ -62,9 +71,13 @@ export function MobileNav() {
           return (
             <li key={item.to}>
               {item.external ? (
-                <a href={item.to} className={cls}>{inner}</a>
+                <a href={item.to} className={cls}>
+                  {inner}
+                </a>
               ) : (
-                <Link to={item.to} className={cls}>{inner}</Link>
+                <Link to={item.to} className={cls}>
+                  {inner}
+                </Link>
               )}
             </li>
           );

@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { formatMoney } from "@/lib/money";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -24,7 +25,14 @@ import {
   Eye,
   History,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,10 +99,6 @@ const tagIcon: Record<ClientTag, typeof Star> = {
   Inactivo: Clock,
 };
 
-function formatMoney(n: number) {
-  return "$" + n.toLocaleString("es-CO");
-}
-
 function ClientAvatar({ name, size = 40 }: { name: string; size?: number }) {
   const initials = name
     .split(" ")
@@ -111,7 +115,17 @@ function ClientAvatar({ name, size = 40 }: { name: string; size?: number }) {
   );
 }
 
-function StatCard({ label, value, icon: Icon, accent }: { label: string; value: string; icon: typeof Users; accent: string }) {
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  accent,
+}: {
+  label: string;
+  value: string;
+  icon: typeof Users;
+  accent: string;
+}) {
   return (
     <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg ${accent}`}>
@@ -125,6 +139,7 @@ function StatCard({ label, value, icon: Icon, accent }: { label: string; value: 
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapDbClient(row: any): Client {
   return {
     id: row.id,
@@ -192,7 +207,11 @@ export default function Clients() {
       if (sortBy === "name") return a.name.localeCompare(b.name);
       if (sortBy === "visits") return b.visits - a.visits;
       if (sortBy === "spent") return b.totalSpent - a.totalSpent;
-      if (sortBy === "recent") return new Date(b.lastVisitDate || "2000-01-01").getTime() - new Date(a.lastVisitDate || "2000-01-01").getTime();
+      if (sortBy === "recent")
+        return (
+          new Date(b.lastVisitDate || "2000-01-01").getTime() -
+          new Date(a.lastVisitDate || "2000-01-01").getTime()
+        );
       return 0;
     });
     return list;
@@ -333,7 +352,7 @@ export default function Clients() {
 
     setHistoryData(
       appts.map((a) => {
-        const svc = serviceMap.get(a.service_id) as any;
+        const svc = serviceMap.get(a.service_id) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
         const d = new Date(a.date + "T00:00:00");
         return {
           service: svc?.name ?? "Servicio",
@@ -343,7 +362,7 @@ export default function Clients() {
           date: d.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" }),
           time: a.time,
         };
-      })
+      }),
     );
     setHistoryLoading(false);
   };
@@ -354,7 +373,9 @@ export default function Clients() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="font-display text-2xl font-bold">Clientes</h2>
-          <p className="text-sm text-muted-foreground">Gestiona tu base de clientes con historial completo y preferencias.</p>
+          <p className="text-sm text-muted-foreground">
+            Gestiona tu base de clientes con historial completo y preferencias.
+          </p>
         </div>
         <button
           onClick={openCreate}
@@ -366,10 +387,30 @@ export default function Clients() {
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total clientes" value={loading ? "—" : String(clientsData.length)} icon={Users} accent="bg-primary/10 text-primary" />
-        <StatCard label="Clientes activos" value={loading ? "—" : String(activeCount)} icon={CheckCircle2} accent="bg-success/10 text-success" />
-        <StatCard label="Clientes VIP" value={loading ? "—" : String(vipCount)} icon={Star} accent="bg-chart-5/10 text-chart-5" />
-        <StatCard label="Ingresos totales" value={loading ? "—" : formatMoney(totalRevenue)} icon={ClipboardList} accent="bg-chart-2/10 text-chart-2" />
+        <StatCard
+          label="Total clientes"
+          value={loading ? "—" : String(clientsData.length)}
+          icon={Users}
+          accent="bg-primary/10 text-primary"
+        />
+        <StatCard
+          label="Clientes activos"
+          value={loading ? "—" : String(activeCount)}
+          icon={CheckCircle2}
+          accent="bg-success/10 text-success"
+        />
+        <StatCard
+          label="Clientes VIP"
+          value={loading ? "—" : String(vipCount)}
+          icon={Star}
+          accent="bg-chart-5/10 text-chart-5"
+        />
+        <StatCard
+          label="Ingresos totales"
+          value={loading ? "—" : formatMoney(totalRevenue)}
+          icon={ClipboardList}
+          accent="bg-chart-2/10 text-chart-2"
+        />
       </div>
 
       {/* Toolbar */}
@@ -441,7 +482,10 @@ export default function Clients() {
               {filtered.map((c) => {
                 const TagIcon = tagIcon[c.tag];
                 return (
-                  <tr key={c.id} className="border-b border-border transition-colors hover:bg-muted/40">
+                  <tr
+                    key={c.id}
+                    className="border-b border-border transition-colors hover:bg-muted/40"
+                  >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <ClientAvatar name={c.name} size={36} />
@@ -464,12 +508,17 @@ export default function Clients() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant="outline" className={`gap-1 text-[10px] font-semibold uppercase tracking-wider ${tagStyles[c.tag]}`}>
+                      <Badge
+                        variant="outline"
+                        className={`gap-1 text-[10px] font-semibold uppercase tracking-wider ${tagStyles[c.tag]}`}
+                      >
                         <TagIcon className="h-3 w-3" /> {c.tag}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-right font-medium">{c.visits}</td>
-                    <td className="px-4 py-3 text-right font-medium">{formatMoney(c.totalSpent)}</td>
+                    <td className="px-4 py-3 text-right font-medium">
+                      {formatMoney(c.totalSpent)}
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground">{c.lastVisit}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
@@ -545,7 +594,10 @@ export default function Clients() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate font-display font-semibold">{c.name}</p>
-                    <Badge variant="outline" className={`gap-1 text-[10px] font-semibold uppercase ${tagStyles[c.tag]}`}>
+                    <Badge
+                      variant="outline"
+                      className={`gap-1 text-[10px] font-semibold uppercase ${tagStyles[c.tag]}`}
+                    >
                       <TagIcon className="h-3 w-3" /> {c.tag}
                     </Badge>
                   </div>
@@ -598,30 +650,59 @@ export default function Clients() {
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Nombre completo</label>
-              <input value={formName} onChange={(e) => setFormName(e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Ej. Ana María López" />
+              <input
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                placeholder="Ej. Ana María López"
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Teléfono</label>
-                <input value={formPhone} onChange={(e) => setFormPhone(e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="+57 300 ..." />
+                <input
+                  value={formPhone}
+                  onChange={(e) => setFormPhone(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  placeholder="+57 300 ..."
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Email</label>
-                <input value={formEmail} onChange={(e) => setFormEmail(e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="cliente@correo.com" />
+                <input
+                  value={formEmail}
+                  onChange={(e) => setFormEmail(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  placeholder="cliente@correo.com"
+                />
               </div>
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Dirección</label>
-              <input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Dirección en Barranquilla" />
+              <input
+                value={formAddress}
+                onChange={(e) => setFormAddress(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                placeholder="Dirección en Barranquilla"
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Cumpleaños</label>
-                <input value={formBirthday} onChange={(e) => setFormBirthday(e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Ej. 15 Marzo" />
+                <input
+                  value={formBirthday}
+                  onChange={(e) => setFormBirthday(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  placeholder="Ej. 15 Marzo"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Etiqueta</label>
-                <select value={formTag} onChange={(e) => setFormTag(e.target.value as ClientTag)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                <select
+                  value={formTag}
+                  onChange={(e) => setFormTag(e.target.value as ClientTag)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
                   <option value="Nuevo">Nuevo</option>
                   <option value="Frecuente">Frecuente</option>
                   <option value="VIP">VIP</option>
@@ -630,12 +711,27 @@ export default function Clients() {
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Notas</label>
-              <textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" placeholder="Alergias, preferencias, etc." />
+              <textarea
+                value={formNotes}
+                onChange={(e) => setFormNotes(e.target.value)}
+                className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                placeholder="Alergias, preferencias, etc."
+              />
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <button onClick={() => setCreateOpen(false)} className="rounded-lg border border-input px-4 py-2 text-sm font-medium hover:bg-muted">Cancelar</button>
-            <button onClick={saveClient} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Guardar cliente</button>
+            <button
+              onClick={() => setCreateOpen(false)}
+              className="rounded-lg border border-input px-4 py-2 text-sm font-medium hover:bg-muted"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={saveClient}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+            >
+              Guardar cliente
+            </button>
           </div>
         </DialogContent>
       </Dialog>
@@ -651,31 +747,61 @@ export default function Clients() {
             <div className="space-y-4 py-2">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Nombre completo</label>
-                <input value={formName} onChange={(e) => setFormName(e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                <input
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium">Teléfono</label>
-                  <input value={formPhone} onChange={(e) => setFormPhone(e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                  <input
+                    value={formPhone}
+                    onChange={(e) => setFormPhone(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium">Email</label>
-                  <input value={formEmail} onChange={(e) => setFormEmail(e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                  <input
+                    value={formEmail}
+                    onChange={(e) => setFormEmail(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Dirección</label>
-                <input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                <input
+                  value={formAddress}
+                  onChange={(e) => setFormAddress(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Notas</label>
-                <textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                <textarea
+                  value={formNotes}
+                  onChange={(e) => setFormNotes(e.target.value)}
+                  className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
               </div>
             </div>
           )}
           <DialogFooter>
-            <button onClick={() => setEditClient(null)} className="rounded-lg border border-input px-4 py-2 text-sm font-medium hover:bg-muted">Cancelar</button>
-            <button onClick={updateClient} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Guardar cambios</button>
+            <button
+              onClick={() => setEditClient(null)}
+              className="rounded-lg border border-input px-4 py-2 text-sm font-medium hover:bg-muted"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={updateClient}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+            >
+              Guardar cambios
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -686,7 +812,9 @@ export default function Clients() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar cliente?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción eliminará permanentemente a <span className="font-semibold text-foreground">{deleteClient?.name}</span> y todo su historial. No se puede deshacer.
+              Esta acción eliminará permanentemente a{" "}
+              <span className="font-semibold text-foreground">{deleteClient?.name}</span> y todo su
+              historial. No se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -711,7 +839,9 @@ export default function Clients() {
             </DialogDescription>
           </DialogHeader>
           {historyLoading ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">Cargando historial...</div>
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              Cargando historial...
+            </div>
           ) : historyData.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
               <Clock className="mx-auto mb-2 h-8 w-8 opacity-30" />
@@ -720,7 +850,10 @@ export default function Clients() {
           ) : (
             <div className="max-h-[60vh] space-y-2 overflow-y-auto py-2">
               {historyData.map((h, i) => (
-                <div key={i} className="flex items-start gap-3 rounded-lg border border-border bg-card p-3">
+                <div
+                  key={i}
+                  className="flex items-start gap-3 rounded-lg border border-border bg-card p-3"
+                >
                   <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                     <Calendar className="h-4 w-4" />
                   </div>
@@ -729,8 +862,13 @@ export default function Clients() {
                       <p className="font-display text-sm font-semibold">{h.service}</p>
                       <span className="text-xs font-semibold">{formatMoney(h.price)}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">{h.date} · {h.time} · {h.staff}</p>
-                    <Badge variant="outline" className={`mt-1.5 text-[10px] ${h.status === "Completada" ? "border-success/20 bg-success/10 text-success" : "border-muted text-muted-foreground"}`}>
+                    <p className="text-xs text-muted-foreground">
+                      {h.date} · {h.time} · {h.staff}
+                    </p>
+                    <Badge
+                      variant="outline"
+                      className={`mt-1.5 text-[10px] ${h.status === "Completada" ? "border-success/20 bg-success/10 text-success" : "border-muted text-muted-foreground"}`}
+                    >
                       {h.status}
                     </Badge>
                   </div>
@@ -739,7 +877,12 @@ export default function Clients() {
             </div>
           )}
           <DialogFooter>
-            <button onClick={() => setHistoryClient(null)} className="rounded-lg border border-input px-4 py-2 text-sm font-medium hover:bg-muted">Cerrar</button>
+            <button
+              onClick={() => setHistoryClient(null)}
+              className="rounded-lg border border-input px-4 py-2 text-sm font-medium hover:bg-muted"
+            >
+              Cerrar
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
