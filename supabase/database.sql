@@ -178,6 +178,18 @@ alter table if exists public.clients add column if not exists preferences text;
 alter table if exists public.clients add column if not exists referral text;
 alter table if exists public.services add column if not exists color text;
 
+-- updated_at para las tablas que la app mantiene (sync/realtime/auditoria).
+-- Debe estar antes de los triggers e indices que lo usan.
+alter table if exists public.users          add column if not exists updated_at timestamptz not null default now();
+alter table if exists public.profiles       add column if not exists updated_at timestamptz not null default now();
+alter table if exists public.businesses     add column if not exists updated_at timestamptz not null default now();
+alter table if exists public.business_hours add column if not exists updated_at timestamptz not null default now();
+alter table if exists public.staff          add column if not exists updated_at timestamptz not null default now();
+alter table if exists public.services       add column if not exists updated_at timestamptz not null default now();
+alter table if exists public.clients        add column if not exists updated_at timestamptz not null default now();
+alter table if exists public.appointments   add column if not exists updated_at timestamptz not null default now();
+alter table if exists public.notifications  add column if not exists updated_at timestamptz not null default now();
+
 -- Antes la app usaba Supabase Auth y las FK apuntaban a auth.users. Ahora el
 -- login es por consulta directa a public.users, asi que las FK se re-encadenan
 -- a esa tabla (idempotente: se elimina y se vuelve a crear el mismo constraint).
@@ -209,6 +221,85 @@ commit;
 create index if not exists clients_tag_idx     on public.clients (tag);
 commit;
 create index if not exists clients_user_idx    on public.clients (user_id);
+commit;
+
+-- Horario valido: la apertura siempre debe ser anterior al cierre.
+-- Idempotente (add constraint no soporta "if not exists").
+do $$
+begin
+  begin
+    alter table public.business_hours add constraint business_hours_open_before_close
+      check (open_time < close_time);
+  exception when duplicate_object then null;
+  end;
+end $$;
+commit;
+
+-- Indices para las FK mas consultadas (faltaban: la agenda filtra por
+-- business_id/fecha/staff; el ledger agrupa por negocio y staff).
+create index if not exists appointments_business_idx on public.appointments (business_id);
+commit;
+create index if not exists appointments_staff_idx    on public.appointments (staff_id);
+commit;
+create index if not exists services_business_idx      on public.services (business_id);
+commit;
+create index if not exists staff_business_idx         on public.staff (business_id);
+commit;
+create index if not exists business_hours_business_idx on public.business_hours (business_id);
+commit;
+create index if not exists businesses_owner_idx       on public.businesses (owner_id);
+commit;
+create index if not exists clients_business_idx       on public.clients (business_id);
+commit;
+
+-- updated_at se mantiene solo (null si nunca se modifico). La funcion es
+-- idempotente; los triggers se eliminan y recrean por tabla con su propio
+-- COMMIT para no acumular bloqueos exclusivos (misma razon que los indices).
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$$;
+commit;
+
+drop trigger if exists trg_appointments_updated_at on public.appointments;
+create trigger trg_appointments_updated_at before update on public.appointments
+  for each row execute function public.set_updated_at();
+commit;
+
+drop trigger if exists trg_clients_updated_at on public.clients;
+create trigger trg_clients_updated_at before update on public.clients
+  for each row execute function public.set_updated_at();
+commit;
+
+drop trigger if exists trg_services_updated_at on public.services;
+create trigger trg_services_updated_at before update on public.services
+  for each row execute function public.set_updated_at();
+commit;
+
+drop trigger if exists trg_staff_updated_at on public.staff;
+create trigger trg_staff_updated_at before update on public.staff
+  for each row execute function public.set_updated_at();
+commit;
+
+drop trigger if exists trg_businesses_updated_at on public.businesses;
+create trigger trg_businesses_updated_at before update on public.businesses
+  for each row execute function public.set_updated_at();
+commit;
+
+drop trigger if exists trg_business_hours_updated_at on public.business_hours;
+create trigger trg_business_hours_updated_at before update on public.business_hours
+  for each row execute function public.set_updated_at();
+commit;
+
+drop trigger if exists trg_notifications_updated_at on public.notifications;
+create trigger trg_notifications_updated_at before update on public.notifications
+  for each row execute function public.set_updated_at();
 commit;
 
 -- ============================================================================
@@ -394,6 +485,18 @@ insert into public.services (id, business_id, name, category, duration, price, d
   ('30000000-0000-4000-8000-000000000004', '10000000-0000-4000-8000-000000000001', 'Tratamiento capilar', 'Cabello',     60,  70000, 'Hidratacion profunda y reparacion.',             'Activo'),
   ('30000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000001', 'Maquillaje',          'Maquillaje',  60,  80000, 'Maquillaje social o de evento.',                  'Activo')
 on conflict (id) do nothing;
+
+-- Colores de marca por servicio (la columna ya existe; este UPDATE ademas aplica
+-- a bases pre-existentes que los creo sin color).
+update public.services s set color = v.color
+from (values
+  ('30000000-0000-4000-8000-000000000001', '#6366f1'),
+  ('30000000-0000-4000-8000-000000000002', '#ec4899'),
+  ('30000000-0000-4000-8000-000000000003', '#f43f5e'),
+  ('30000000-0000-4000-8000-000000000004', '#14b8a6'),
+  ('30000000-0000-4000-8000-000000000005', '#f59e0b')
+) as v(id, color)
+where s.id = v.id::uuid;
 
 -- --- 4.6 Servicios disponibles por personal ---
 insert into public.service_staff (id, service_id, staff_id) values
