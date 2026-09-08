@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowRight, Briefcase, Lock, Mail, ShieldCheck, UserCircle2 } from "lucide-react";
+import { ArrowRight, Info, Lock, Mail } from "lucide-react";
 
 import { AuthLayout } from "@/components/auth-layout";
 import { Field, validateEmail } from "@/components/auth-fields";
@@ -10,16 +10,9 @@ export const Route = createFileRoute("/login")({
   component: Login,
 });
 
-const ROLES = [
-  { id: "admin", label: "Administrador", desc: "Dueño del negocio", icon: ShieldCheck },
-  { id: "staff", label: "Personal", desc: "Equipo o asistente", icon: Briefcase },
-  { id: "client", label: "Cliente", desc: "Reservar mis citas", icon: UserCircle2 },
-] as const;
-
 function Login() {
   const navigate = useNavigate();
   const { signIn } = useAuth();
-  const [role, setRole] = useState<(typeof ROLES)[number]["id"]>("admin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string; auth?: string }>({});
@@ -37,19 +30,12 @@ function Login() {
     setLoading(true);
     const err = await signIn(email, password);
     if (err) {
-      setErrors({
-        auth: err === "Invalid login credentials" ? "Correo o contraseña incorrectos" : err,
-      });
+      setErrors({ auth: err });
       setLoading(false);
       return;
     }
-    try {
-      window.localStorage.setItem("citaflex.role", role);
-    } catch {
-      /* noop */
-    }
-    const dest = role === "client" ? "/app/my-appointments" : "/app";
-    navigate({ to: dest });
+    // El layout /app redirige a los clientes a "Mis citas" por su rol.
+    navigate({ to: "/app" });
   }
 
   return (
@@ -66,34 +52,6 @@ function Login() {
       }
     >
       <form className="space-y-5" onSubmit={onSubmit} noValidate>
-        <div>
-          <label className="text-sm font-medium">Ingresar como</label>
-          <div className="mt-2 grid grid-cols-3 gap-2">
-            {ROLES.map((r) => {
-              const Icon = r.icon;
-              const active = role === r.id;
-              return (
-                <button
-                  type="button"
-                  key={r.id}
-                  onClick={() => setRole(r.id)}
-                  className={`group flex flex-col items-start gap-1.5 rounded-lg border p-3 text-left transition ${
-                    active
-                      ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                      : "border-input hover:border-primary/40 hover:bg-accent/40"
-                  }`}
-                >
-                  <Icon
-                    className={`h-4 w-4 ${active ? "text-primary" : "text-muted-foreground"}`}
-                  />
-                  <span className="text-xs font-semibold leading-tight">{r.label}</span>
-                  <span className="text-[10px] leading-tight text-muted-foreground">{r.desc}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
         <Field
           label="Correo electrónico"
           icon={<Mail />}
@@ -129,6 +87,20 @@ function Login() {
             {errors.auth}
           </p>
         )}
+
+        <div className="rounded-lg border border-primary/15 bg-primary/5 p-3.5 text-xs text-muted-foreground">
+          <p className="flex items-center gap-1.5 font-semibold text-foreground">
+            <Info className="h-3.5 w-3.5 text-primary" /> Cuentas de prueba
+          </p>
+          <ul className="mt-1.5 space-y-1">
+            <li>admin@salonbella.co — Administrador</li>
+            <li>staff@salonbella.co — Personal</li>
+            <li>client@salonbella.co — Cliente</li>
+          </ul>
+          <p className="mt-1.5">
+            Contraseña para todas: <span className="font-mono font-semibold">test1234</span>
+          </p>
+        </div>
 
         <button
           disabled={loading}

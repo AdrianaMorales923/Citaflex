@@ -144,19 +144,19 @@ const EMPTY_PROFILE: UserProfile = {
 
 export function RoleProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [role, setRoleState] = useState<Role>("admin");
-  const [profile, setProfile] = useState<UserProfile>(EMPTY_PROFILE);
-  const [profileLoading, setProfileLoading] = useState(true);
-
-  // Restore saved role from localStorage
-  useEffect(() => {
+  // El rol viene de la cuenta autenticada (public.users), no se adivina.
+  const [role, setRoleState] = useState<Role>(() => {
+    if (user?.role) return user.role as Role;
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY) as Role | null;
-      if (stored && stored in PERMISSIONS) setRoleState(stored);
+      if (stored && stored in PERMISSIONS) return stored;
     } catch {
       /* noop */
     }
-  }, []);
+    return "admin";
+  });
+  const [profile, setProfile] = useState<UserProfile>(EMPTY_PROFILE);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   // Fetch real profile from Supabase when user is available
   const fetchProfile = useCallback(async () => {
@@ -166,22 +166,6 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     }
 
     setProfileLoading(true);
-
-    // Get role from users table
-    const { data: userData } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user!.id)
-      .single();
-
-    if (userData?.role) {
-      setRoleState(userData.role as Role);
-      try {
-        window.localStorage.setItem(STORAGE_KEY, userData.role);
-      } catch {
-        /* noop */
-      }
-    }
 
     // Get profile info
     const { data: profileData } = await supabase

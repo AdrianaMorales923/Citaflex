@@ -26,18 +26,16 @@
 -- el reintento es rapido porque los DDL ya estan aplicados (IF NOT EXISTS).
 -- ============================================================================
 
--- PostGIS no; solo necesitamos funciones criptograficas para las contrasenas
-create extension if not exists pgcrypto;
-
 -- ============================================================================
 -- 1) TABLAS
 -- ============================================================================
 
--- Usuarios de la app. El id == auth.users.id (uid de Supabase Auth).
+-- Usuarios de la app. Login directo con email + password (sin Supabase Auth);
+-- la contrasena se guarda en texto plano porque es una demo de un solo negocio.
 create table if not exists public.users (
   id            uuid primary key default gen_random_uuid(),
   email         text unique not null,
-  password_hash text not null default 'managed_by_supabase_auth',
+  password_hash text not null default '',
   role          text not null default 'client' check (role in ('admin', 'staff', 'client')),
   business_name text,
   created_at    timestamptz not null default now()
@@ -45,7 +43,7 @@ create table if not exists public.users (
 
 -- Perfil publico de cada usuario (nombre, telefono, org, cargo)
 create table if not exists public.profiles (
-  user_id    uuid primary key references auth.users (id) on delete cascade,
+  user_id    uuid primary key references public.users (id) on delete cascade,
   name       text,
   phone      text,
   org        text,
@@ -125,7 +123,7 @@ create table if not exists public.service_staff (
 create table if not exists public.clients (
   id          uuid primary key default gen_random_uuid(),
   business_id uuid references public.businesses (id) on delete cascade,
-  user_id     uuid references auth.users (id) on delete cascade,
+  user_id     uuid references public.users (id) on delete cascade,
   name        text not null,
   phone       text,
   email       text,
@@ -157,7 +155,7 @@ create table if not exists public.appointments (
 -- Notificaciones por usuario
 create table if not exists public.notifications (
   id          uuid primary key default gen_random_uuid(),
-  user_id     uuid not null references auth.users (id) on delete cascade,
+  user_id     uuid not null references public.users (id) on delete cascade,
   title       text not null,
   description text,
   tone        text not null default 'primary',  -- primary | success | warning
@@ -168,7 +166,7 @@ create table if not exists public.notifications (
 
 -- Compatibilidad con ejecuciones anteriores del script:
 -- las columnas nuevas deben existir ANTES de crear los indices que las usan
-alter table if exists public.clients add column if not exists user_id uuid references auth.users (id) on delete cascade;
+alter table if exists public.clients add column if not exists user_id uuid references public.users (id) on delete cascade;
 alter table if exists public.profiles add column if not exists location text default 'Barranquilla, Colombia';
 alter table if exists public.businesses add column if not exists category text default 'belleza';
 alter table if exists public.businesses add column if not exists email text;
@@ -179,6 +177,16 @@ alter table if exists public.clients add column if not exists allergies text;
 alter table if exists public.clients add column if not exists preferences text;
 alter table if exists public.clients add column if not exists referral text;
 alter table if exists public.services add column if not exists color text;
+
+-- Antes la app usaba Supabase Auth y las FK apuntaban a auth.users. Ahora el
+-- login es por consulta directa a public.users, asi que las FK se re-encadenan
+-- a esa tabla (idempotente: se elimina y se vuelve a crear el mismo constraint).
+alter table public.profiles      drop constraint if exists profiles_user_id_fkey;
+alter table public.profiles      add constraint profiles_user_id_fkey foreign key (user_id) references public.users (id) on delete cascade;
+alter table public.clients       drop constraint if exists clients_user_id_fkey;
+alter table public.clients       add constraint clients_user_id_fkey foreign key (user_id) references public.users (id) on delete cascade;
+alter table public.notifications drop constraint if exists notifications_user_id_fkey;
+alter table public.notifications add constraint notifications_user_id_fkey foreign key (user_id) references public.users (id) on delete cascade;
 
 -- COMMIT tras las ALTER de compatibilidad: libera los bloqueos exclusivos
 -- de las tablas antes de seguir. Evita "deadlock detected (40P01)" con las
@@ -204,57 +212,65 @@ create index if not exists clients_user_idx    on public.clients (user_id);
 commit;
 
 -- ============================================================================
--- 2) PERMISOS (roles anon/authenticated)
+-- 2) PERMISOS (rol anon)
 -- ============================================================================
+-- Sin Supabase Auth, la app consulta SIEMPRE como rol "anon" (no hay sesion
+-- JWT en la base). Por eso anon tiene acceso completo a tablas y sequences.
 grant usage on schema public to anon, authenticated, service_role;
-grant all on all tables in schema public to authenticated;
-grant all on all sequences in schema public to authenticated;
-grant select, insert, update, delete on all tables in schema public to anon;
-grant select on all sequences in schema public to anon;
+grant all on all tables in schema public to anon, authenticated;
+grant all on all sequences in schema public to anon, authenticated;
 grant all on all tables in schema public to service_role;
 grant all on all sequences in schema public to service_role;
 
--- Reserva publica (/book): el usuario anonimo puede CREAR clientes y citas,
--- y leer solo lo necesario para ver disponibilidad (nunca datos personales
--- como client_id, notes, telefono, etc.).
-revoke all on public.appointments from anon;
-grant insert (id, business_id, date, time, client_id, service_id, staff_id, status, notes) on public.appointments to anon;
-grant select (date, time, staff_id, service_id, status) on public.appointments to anon;
-revoke all on public.clients from anon;
-grant insert (id, business_id, name, phone, email, user_id, tag, notes) on public.clients to anon;
-
 -- ============================================================================
--- 3) ROW LEVEL SECURITY
+-- 3) SIN ROW LEVEL SECURITY
 -- ============================================================================
--- Demo: las tablas de negocio son accesibles por cualquier usuario autenticado
--- (la app todavia no filtra por business_id). Las tablas de cuenta solo por su dueno.
+-- El login es una consulta directa a public.users (email + password) y la
+-- sesion vive en localStorage del navegador, sin JWT de Supabase Auth. Por eso
+-- la app entera consulta como rol "anon" y RLS no podria distinguir usuarios:
+-- se desactiva en TODAS las tablas (demo de un solo negocio). El filtro por
+-- usuario de las notificaciones lo hace la propia app
+-- (WHERE user_id = <id de la sesion guardada en localStorage>).
 
-alter table public.users         enable row level security;
-alter table public.profiles      enable row level security;
-alter table public.notifications enable row level security;
+alter table public.users         disable row level security;
+alter table public.businesses    disable row level security;
+alter table public.business_hours disable row level security;
+alter table public.staff         disable row level security;
+alter table public.services      disable row level security;
+alter table public.service_staff disable row level security;
+alter table public.clients       disable row level security;
+alter table public.appointments  disable row level security;
+alter table public.profiles      disable row level security;
+alter table public.notifications disable row level security;
 
+-- Politicas anteriores (referian auth.uid(), que ya no existe): se eliminan
+-- para no dar falsas expectativas de aislamiento entre usuarios.
 drop policy if exists "users_select_own"  on public.users;
 drop policy if exists "users_insert_own"  on public.users;
 drop policy if exists "users_update_own"  on public.users;
-create policy "users_select_own" on public.users for select to authenticated using (id = auth.uid());
-create policy "users_insert_own" on public.users for insert to authenticated with check (id = auth.uid());
-create policy "users_update_own" on public.users for update to authenticated using (id = auth.uid());
-
 drop policy if exists "profiles_select_own" on public.profiles;
 drop policy if exists "profiles_insert_own" on public.profiles;
 drop policy if exists "profiles_update_own" on public.profiles;
-create policy "profiles_select_own" on public.profiles for select to authenticated using (user_id = auth.uid());
-create policy "profiles_insert_own" on public.profiles for insert to authenticated with check (user_id = auth.uid());
-create policy "profiles_update_own" on public.profiles for update to authenticated using (user_id = auth.uid());
-
 drop policy if exists "notifications_all_own" on public.notifications;
-create policy "notifications_all_own" on public.notifications for all to authenticated
-  using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists "biz_all_authenticated" on public.businesses;
+drop policy if exists "biz_read_anon"         on public.businesses;
+drop policy if exists "hours_all_authenticated" on public.business_hours;
+drop policy if exists "hours_read_anon"         on public.business_hours;
+drop policy if exists "staff_all_authenticated" on public.staff;
+drop policy if exists "staff_read_anon"         on public.staff;
+drop policy if exists "services_all_authenticated" on public.services;
+drop policy if exists "services_read_anon"         on public.services;
+drop policy if exists "junc_all_authenticated" on public.service_staff;
+drop policy if exists "junc_read_anon"         on public.service_staff;
+drop policy if exists "clients_all_authenticated" on public.clients;
+drop policy if exists "appointments_all_authenticated" on public.appointments;
+drop policy if exists "clients_insert_anon" on public.clients;
+drop policy if exists "appointments_read_anon" on public.appointments;
+drop policy if exists "appointments_insert_anon" on public.appointments;
 
--- Funciones seguras para crear notificaciones: se ejecutan como el dueno de
--- las tablas (security definer), asi cualquier flujo (reserva publica anonima,
--- registro de cuentas, citas del panel) puede notificar sin conceder INSERT
--- global en notifications ni SELECT global en users.
+-- Funciones para crear notificaciones: se ejecutan como dueno de las tablas
+-- (security definer), asi cualquier flujo (reserva publica, registro, citas
+-- del panel) puede notificar a otros usuarios sin INSERT global en la app.
 create or replace function public.create_notification(
   user_id uuid,
   title text,
@@ -295,7 +311,7 @@ revoke all on function public.notify_roles(text[], text, text, text, text) from 
 grant execute on function public.notify_roles(text[], text, text, text, text) to anon, authenticated;
 
 -- Notificaciones en tiempo real: la campanita se actualiza sin recargar.
--- RLS mantiene que cada usuario solo reciba sus propias filas.
+-- La app filtra por user_id al suscribirse, asi solo llegan las suyas.
 do $$
 begin
   if not exists (
@@ -309,124 +325,34 @@ begin
 end $$;
 commit;
 
--- Publico no autenticado: puede ver el catalogo (servicios/personal), no datos privados.
-alter table public.businesses    enable row level security;
-alter table public.business_hours enable row level security;
-alter table public.staff         enable row level security;
-alter table public.services      enable row level security;
-alter table public.service_staff enable row level security;
-
-drop policy if exists "biz_all_authenticated" on public.businesses;
-drop policy if exists "biz_read_anon"         on public.businesses;
-create policy "biz_all_authenticated" on public.businesses for all to authenticated using (true) with check (true);
-create policy "biz_read_anon"         on public.businesses for select to anon using (true);
-
-drop policy if exists "hours_all_authenticated" on public.business_hours;
-drop policy if exists "hours_read_anon"         on public.business_hours;
-create policy "hours_all_authenticated" on public.business_hours for all to authenticated using (true) with check (true);
-create policy "hours_read_anon"         on public.business_hours for select to anon using (true);
-
-drop policy if exists "staff_all_authenticated" on public.staff;
-drop policy if exists "staff_read_anon"         on public.staff;
-create policy "staff_all_authenticated" on public.staff for all to authenticated using (true) with check (true);
-create policy "staff_read_anon"         on public.staff for select to anon using (true);
-
-drop policy if exists "services_all_authenticated" on public.services;
-drop policy if exists "services_read_anon"         on public.services;
-create policy "services_all_authenticated" on public.services for all to authenticated using (true) with check (true);
-create policy "services_read_anon"         on public.services for select to anon using (true);
-
-drop policy if exists "junc_all_authenticated" on public.service_staff;
-drop policy if exists "junc_read_anon"         on public.service_staff;
-create policy "junc_all_authenticated" on public.service_staff for all to authenticated using (true) with check (true);
-create policy "junc_read_anon"         on public.service_staff for select to anon using (true);
-
--- Datos privados de operacion: solo autenticados
-alter table public.clients      enable row level security;
-alter table public.appointments enable row level security;
-
-drop policy if exists "clients_all_authenticated" on public.clients;
-create policy "clients_all_authenticated" on public.clients for all to authenticated using (true) with check (true);
-
-drop policy if exists "appointments_all_authenticated" on public.appointments;
-create policy "appointments_all_authenticated" on public.appointments for all to authenticated using (true) with check (true);
-
--- Reserva publica sin sesion (/book): anonimo puede insertar citas y clientes,
--- y consultar unicamente fecha/hora/personal/servicio/estado para disponibilidad
--- (los permisos de columna de la seccion 2 limitan lo que puede leer).
-drop policy if exists "clients_insert_anon" on public.clients;
-create policy "clients_insert_anon" on public.clients for insert to anon with check (true);
-drop policy if exists "appointments_read_anon" on public.appointments;
-create policy "appointments_read_anon" on public.appointments for select to anon using (true);
-drop policy if exists "appointments_insert_anon" on public.appointments;
-create policy "appointments_insert_anon" on public.appointments for insert to anon with check (true);
-
--- COMMIT: libera los bloqueos de RLS/policies antes de cargar los datos.
-commit;
-
 -- ============================================================================
 -- 4) DATOS DE DEMOSTRACION
 -- ============================================================================
 
--- --- 4.1 + 4.2 Usuarios de Supabase Auth, identidades, usuarios de la app y perfiles ---
--- Los usuarios de prueba pueden ya existir con un id generado por Supabase Auth
--- (p.ej. registrados desde la app). Por eso se resuelve el id REAL por email y
--- todo lo demas (identidades, public.users, profiles) referencia ese id real.
+-- --- 4.1 + 4.2 Usuarios de la app y perfiles ---
+-- Sin Supabase Auth: las cuentas se crean directo en public.users con la
+-- contrasena en texto plano (demo). Re-ejecutar el script SIEMPRE restaura
+-- la contrasena de prueba (test1234) y el rol de las cuentas demo, aunque
+-- existan filas creadas por ejecuciones anteriores (on conflict (email)).
 do $$
 declare
-  v_instance uuid;
   v_admin uuid;
   v_staff uuid;
   v_client uuid;
 begin
-  select coalesce(instance_id, '00000000-0000-0000-0000-000000000000') into v_instance
-  from auth.users limit 1;
-
-  -- Asegurar que los usuarios de prueba existen (contrasena: test1234)
-  insert into auth.users
-    (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-     last_sign_in_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
-     confirmation_token, email_change, email_change_token_new, recovery_token)
-  values
-    (v_instance, '00000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated',
-     'admin@salonbella.co',  crypt('test1234', gen_salt('bf')), now(), now(),
-     '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb, now(), now(), '', '', '', ''),
-    (v_instance, '00000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated',
-     'staff@salonbella.co',  crypt('test1234', gen_salt('bf')), now(), now(),
-     '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb, now(), now(), '', '', '', ''),
-    (v_instance, '00000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated',
-     'client@salonbella.co', crypt('test1234', gen_salt('bf')), now(), now(),
-     '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb, now(), now(), '', '', '', '')
-  -- Sin target: en Supabase el unique de email es un indice parcial
-  -- (WHERE deleted_at IS NULL), que ON CONFLICT (email) no puede inferir.
-  on conflict do nothing;
-
-  -- IDs reales (los fijos o los ya existentes en el proyecto)
-  select id into v_admin from auth.users where email = 'admin@salonbella.co';
-  select id into v_staff from auth.users where email = 'staff@salonbella.co';
-  select id into v_client from auth.users where email = 'client@salonbella.co';
-
-  -- Identidades (necesarias para login por email)
-  insert into auth.identities
-    (id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
-  values
-    (gen_random_uuid(), 'admin@salonbella.co',  v_admin,
-     jsonb_build_object('sub', v_admin, 'email', 'admin@salonbella.co'),
-     'email', now(), now(), now()),
-    (gen_random_uuid(), 'staff@salonbella.co',  v_staff,
-     jsonb_build_object('sub', v_staff, 'email', 'staff@salonbella.co'),
-     'email', now(), now(), now()),
-    (gen_random_uuid(), 'client@salonbella.co', v_client,
-     jsonb_build_object('sub', v_client, 'email', 'client@salonbella.co'),
-     'email', now(), now(), now())
-  on conflict do nothing;
-
-  -- Usuarios de la app (public.users) y perfiles con el id real
   insert into public.users (id, email, password_hash, role, business_name) values
-    (v_admin,  'admin@salonbella.co',  'managed_by_supabase_auth', 'admin',  'Salon Bella Barranquilla'),
-    (v_staff,  'staff@salonbella.co',  'managed_by_supabase_auth', 'staff',  null),
-    (v_client, 'client@salonbella.co', 'managed_by_supabase_auth', 'client', null)
-  on conflict (id) do nothing;
+    ('00000000-0000-4000-8000-000000000001', 'admin@salonbella.co',  'test1234', 'admin',  'Salon Bella Barranquilla'),
+    ('00000000-0000-4000-8000-000000000002', 'staff@salonbella.co',  'test1234', 'staff',  null),
+    ('00000000-0000-4000-8000-000000000003', 'client@salonbella.co', 'test1234', 'client', null)
+  on conflict (email) do update
+    set password_hash = excluded.password_hash,
+        role          = excluded.role,
+        business_name = excluded.business_name;
+
+  -- IDs reales de las cuentas demo (pueden no ser los fijos si existian antes)
+  select id into v_admin from public.users where email = 'admin@salonbella.co';
+  select id into v_staff from public.users where email = 'staff@salonbella.co';
+  select id into v_client from public.users where email = 'client@salonbella.co';
 
   insert into public.profiles (user_id, name, phone, org, title) values
     (v_admin,  'Maria Rodriguez', '+57 300 555 0101', 'Salon Bella Barranquilla', 'Administradora'),
@@ -438,7 +364,7 @@ end $$;
 -- --- 4.3 Negocio y horarios ---
 insert into public.businesses (id, owner_id, name, phone, address, city, country, currency) values
   ('10000000-0000-4000-8000-000000000001',
-   (select id from auth.users where email = 'admin@salonbella.co'),
+   (select id from public.users where email = 'admin@salonbella.co'),
    'Salon Bella Barranquilla', '+57 300 555 0100', 'Cra. 53 # 74-120, Barranquilla', 'Barranquilla', 'Colombia', 'COP')
 on conflict (id) do nothing;
 
@@ -525,16 +451,16 @@ on conflict (id) do nothing;
 -- Vincula la cuenta de prueba client@salonbella.co con la clienta "Valentina Gomez"
 -- (asi "Mis citas" e "Historial" del usuario cliente muestran datos reales)
 update public.clients
-set user_id = (select id from auth.users where email = 'client@salonbella.co')
+set user_id = (select id from public.users where email = 'client@salonbella.co')
 where id = '40000000-0000-4000-8000-000000000001';
 
 -- --- 4.9 Notificaciones (para el usuario admin) ---
 insert into public.notifications (id, user_id, title, description, tone, icon, read) values
-  ('60000000-0000-4000-8000-000000000001', (select id from auth.users where email = 'admin@salonbella.co'), 'Bienvenida a Citaflex',        'Tu negocio esta listo. Empieza a agendar citas y gestiona tus clientes.', 'primary', 'Star',         true),
-  ('60000000-0000-4000-8000-000000000002', (select id from auth.users where email = 'admin@salonbella.co'), 'Nueva cita creada',            'Valentina Gomez · Corte + Peinado hoy a las 09:30.',                    'primary', 'Calendar',     false),
-  ('60000000-0000-4000-8000-000000000003', (select id from auth.users where email = 'admin@salonbella.co'), 'Nuevo cliente registrado',     'Daniela Guzman se agrego a tu base de clientes.',                       'success', 'UserPlus',     false),
-  ('60000000-0000-4000-8000-000000000004', (select id from auth.users where email = 'admin@salonbella.co'), 'Cita cancelada',               'Ana Sofia Rios cancelo su manicure.',                                   'warning', 'AlertCircle',  false),
-  ('60000000-0000-4000-8000-000000000005', (select id from auth.users where email = 'admin@salonbella.co'), 'Cita completada',              'Daniela Guzman · Tratamiento capilar completado.',                      'success', 'CheckCircle2', true)
+  ('60000000-0000-4000-8000-000000000001', (select id from public.users where email = 'admin@salonbella.co'), 'Bienvenida a Citaflex',        'Tu negocio esta listo. Empieza a agendar citas y gestiona tus clientes.', 'primary', 'Star',         true),
+  ('60000000-0000-4000-8000-000000000002', (select id from public.users where email = 'admin@salonbella.co'), 'Nueva cita creada',            'Valentina Gomez · Corte + Peinado hoy a las 09:30.',                    'primary', 'Calendar',     false),
+  ('60000000-0000-4000-8000-000000000003', (select id from public.users where email = 'admin@salonbella.co'), 'Nuevo cliente registrado',     'Daniela Guzman se agrego a tu base de clientes.',                       'success', 'UserPlus',     false),
+  ('60000000-0000-4000-8000-000000000004', (select id from public.users where email = 'admin@salonbella.co'), 'Cita cancelada',               'Ana Sofia Rios cancelo su manicure.',                                   'warning', 'AlertCircle',  false),
+  ('60000000-0000-4000-8000-000000000005', (select id from public.users where email = 'admin@salonbella.co'), 'Cita completada',              'Daniela Guzman · Tratamiento capilar completado.',                      'success', 'CheckCircle2', true)
 on conflict (id) do nothing;
 
 -- Citas adicionales para la clienta de prueba (Valentina Gomez)

@@ -287,6 +287,7 @@ function ChangePasswordDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
+  const { user } = useAuth();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -302,7 +303,21 @@ function ChangePasswordDialog({
       return;
     }
     setBusy(true);
-    const { error } = await supabase.auth.updateUser({ password: next });
+    const { data: check } = await supabase
+      .from("users")
+      .select("id")
+      .eq("id", user!.id)
+      .eq("password_hash", current)
+      .maybeSingle();
+    if (!check) {
+      setBusy(false);
+      toast.error("La contraseña actual no es correcta");
+      return;
+    }
+    const { error } = await supabase
+      .from("users")
+      .update({ password_hash: next })
+      .eq("id", user!.id);
     setBusy(false);
     if (error) {
       toast.error("No se pudo cambiar la contraseña: " + error.message);

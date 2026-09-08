@@ -57,8 +57,9 @@ function ForgotPassword() {
     }
     setError(undefined);
     setLoading(true);
-    // Demo: la actualización es simulada porque el correo (y por tanto el
-    // enlace real de Supabase) nunca se envía en este modo de prueba.
+    // Demo: la actualización es simulada (el correo, y por tanto un enlace
+    // real, nunca se envía en este modo de prueba). La cuenta en public.users
+    // no cambia; es consistente con la demo de un solo negocio.
     setTimeout(() => {
       setLoading(false);
       toast.success("Contraseña actualizada. Inicia sesión con tu nueva contraseña.");

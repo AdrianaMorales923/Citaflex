@@ -14,8 +14,6 @@ import {
 import { AuthLayout } from "@/components/auth-layout";
 import { Field, usePasswordStrength, validateEmail } from "@/components/auth-fields";
 import { useAuth } from "@/lib/auth-context";
-import { notifyRoles } from "@/lib/use-notifications";
-import supabase from "@/lib/supabase";
 
 export const Route = createFileRoute("/register")({
   component: Register,
@@ -71,48 +69,13 @@ function Register() {
     if (Object.values(next).some(Boolean)) return;
 
     setLoading(true);
-    const err = await signUp(email, password);
+    const err = await signUp({ email, password, role, name, business });
     if (err) {
-      setErrors({
-        auth: err === "User already registered" ? "Este correo ya está registrado" : err,
-      });
+      setErrors({ auth: err });
       setLoading(false);
       return;
     }
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const user = session?.user;
-    if (user) {
-      await supabase.from("users").insert({
-        id: user.id,
-        email,
-        password_hash: "managed_by_supabase_auth",
-        role,
-        business_name: role === "admin" ? business : null,
-      });
-      await supabase.from("profiles").insert({
-        user_id: user.id,
-        name,
-      });
-
-      await notifyRoles(
-        {
-          title: "Nueva cuenta creada",
-          description: `${name.trim()} (${email}) se registró como ${ROLES.find((r) => r.id === role)?.label.toLowerCase()}.`,
-          tone: "success",
-          icon: "UserPlus",
-        },
-        ["admin"],
-      );
-    }
-
-    try {
-      window.localStorage.setItem("citaflex.role", role);
-    } catch {
-      /* noop */
-    }
     const dest = role === "client" ? "/app/my-appointments" : "/app";
     navigate({ to: dest });
   }
