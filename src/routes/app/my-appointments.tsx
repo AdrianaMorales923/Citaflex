@@ -18,6 +18,7 @@ import { Calendar, MapPin, User, Scissors, Plus, XCircle, Check, Loader2 } from 
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { useBusiness } from "@/lib/business-settings";
 import supabase from "@/lib/supabase";
 
 export const Route = createFileRoute("/app/my-appointments")({ component: MyAppointments });
@@ -58,6 +59,7 @@ const TONE: Record<Status, string> = {
 
 function MyAppointments() {
   const { user } = useAuth();
+  const { business } = useBusiness();
   const [appts, setAppts] = useState<Appt[]>([]);
   const [historyCount, setHistoryCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -119,7 +121,7 @@ function MyAppointments() {
           time: a.time.slice(0, 5),
           service: serviceMap.get(a.service_id)?.name ?? "Servicio",
           staff: staffMap.get(a.staff_id) ?? "Personal",
-          location: "Salón Bella · Barranquilla",
+          location: [business?.name, business?.address].filter(Boolean).join(" · "),
           price: formatMoney(serviceMap.get(a.service_id)?.price ?? 0),
           status: a.status as Status,
         })),

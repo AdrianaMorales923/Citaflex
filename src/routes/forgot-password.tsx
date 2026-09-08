@@ -1,39 +1,78 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, CheckCircle2, Mail } from "lucide-react";
+import { ArrowLeft, ArrowRight, KeyRound, Lock, Mail } from "lucide-react";
+import { toast } from "sonner";
 
 import { AuthLayout } from "@/components/auth-layout";
-import { Field, validateEmail } from "@/components/auth-fields";
+import { Field, usePasswordStrength, validateEmail } from "@/components/auth-fields";
 
-export const Route = createFileRoute("/forgot-password")({
-  component: ForgotPassword,
-});
+export const Route = createFileRoute("/forgot-password")({ component: ForgotPassword });
+
+function randomCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
 
 function ForgotPassword() {
+  const navigate = useNavigate();
+  const [step, setStep] = useState<"email" | "reset">("email");
   const [email, setEmail] = useState("");
+  const [demoCode, setDemoCode] = useState("");
+  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | undefined>();
-  const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  function onSubmit(e: React.FormEvent) {
+  const strength = usePasswordStrength(password);
+
+  function onSend(e: React.FormEvent) {
     e.preventDefault();
     const err = validateEmail(email);
     setError(err);
     if (err) return;
+    // Demo: el correo no se envía; el código se genera en el frontend.
+    setSending(true);
+    setTimeout(() => {
+      setSending(false);
+      setDemoCode(randomCode());
+      setCode("");
+      setStep("reset");
+    }, 500);
+  }
+
+  function onReset(e: React.FormEvent) {
+    e.preventDefault();
+    if (code.trim() !== demoCode) {
+      setError("El código no es válido. Verifica el código mostrado.");
+      return;
+    }
+    if (strength.score < 2) {
+      setError("Crea una contraseña más segura");
+      return;
+    }
+    if (password !== confirm) {
+      setError("Las contraseñas no coinciden");
+      return;
+    }
+    setError(undefined);
     setLoading(true);
+    // Demo: la actualización es simulada porque el correo (y por tanto el
+    // enlace real de Supabase) nunca se envía en este modo de prueba.
     setTimeout(() => {
       setLoading(false);
-      setSent(true);
+      toast.success("Contraseña actualizada. Inicia sesión con tu nueva contraseña.");
+      navigate({ to: "/login" });
     }, 600);
   }
 
   return (
     <AuthLayout
-      title={sent ? "Revisa tu correo" : "Recuperar contraseña"}
+      title={step === "email" ? "Recuperar contraseña" : "Nueva contraseña"}
       subtitle={
-        sent
-          ? "Te enviamos un enlace para restablecer tu contraseña."
-          : "Ingresa tu correo y te enviaremos un enlace para crear una nueva."
+        step === "email"
+          ? "Ingresa tu correo y te enviaremos un código para crear una nueva contraseña."
+          : "Ingresa el código y define tu nueva contraseña."
       }
       footer={
         <Link
@@ -44,27 +83,8 @@ function ForgotPassword() {
         </Link>
       }
     >
-      {sent ? (
-        <div className="rounded-lg border border-primary/20 bg-primary/5 p-5 text-center">
-          <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary text-primary-foreground">
-            <CheckCircle2 className="h-6 w-6" />
-          </div>
-          <p className="mt-4 text-sm text-foreground">
-            Enviamos instrucciones a <span className="font-semibold">{email}</span>.
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            ¿No lo recibes? Revisa tu carpeta de spam o{" "}
-            <button
-              onClick={() => setSent(false)}
-              className="font-medium text-primary hover:underline"
-            >
-              prueba con otro correo
-            </button>
-            .
-          </p>
-        </div>
-      ) : (
-        <form className="space-y-5" onSubmit={onSubmit} noValidate>
+      {step === "email" ? (
+        <form className="space-y-5" onSubmit={onSend} noValidate>
           <Field
             label="Correo electrónico"
             icon={<Mail />}
@@ -76,10 +96,67 @@ function ForgotPassword() {
             error={error}
           />
           <button
+            disabled={sending}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-70"
+          >
+            {sending ? "Enviando..." : "Enviar código"} <ArrowRight className="h-4 w-4" />
+          </button>
+        </form>
+      ) : (
+        <form className="space-y-5" onSubmit={onReset} noValidate>
+          <div className="rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm">
+            <p className="font-semibold text-warning-foreground">Función de prueba</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              El correo no se envía. El código generado es{" "}
+              <span className="rounded bg-background px-1.5 py-0.5 font-mono text-sm font-bold tracking-widest text-foreground">
+                {demoCode}
+              </span>
+            </p>
+          </div>
+
+          <Field
+            label="Código de verificación"
+            icon={<KeyRound />}
+            value={code}
+            onChange={setCode}
+            placeholder="000000"
+            inputMode="numeric"
+            maxLength={6}
+            autoComplete="one-time-code"
+          />
+
+          <Field
+            label="Nueva contraseña"
+            icon={<Lock />}
+            type="password"
+            value={password}
+            onChange={setPassword}
+            placeholder="Mínimo 8 caracteres"
+            autoComplete="new-password"
+          />
+
+          <Field
+            label="Confirmar contraseña"
+            icon={<Lock />}
+            type="password"
+            value={confirm}
+            onChange={setConfirm}
+            placeholder="Repite la contraseña"
+            autoComplete="new-password"
+          />
+
+          {error && (
+            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+              {error}
+            </p>
+          )}
+
+          <button
             disabled={loading}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-70"
           >
-            {loading ? "Enviando..." : "Enviar enlace"} <ArrowRight className="h-4 w-4" />
+            {loading ? "Restableciendo..." : "Restablecer contraseña"}{" "}
+            <ArrowRight className="h-4 w-4" />
           </button>
         </form>
       )}

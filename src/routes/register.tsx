@@ -14,6 +14,7 @@ import {
 import { AuthLayout } from "@/components/auth-layout";
 import { Field, usePasswordStrength, validateEmail } from "@/components/auth-fields";
 import { useAuth } from "@/lib/auth-context";
+import { notifyRoles } from "@/lib/use-notifications";
 import supabase from "@/lib/supabase";
 
 export const Route = createFileRoute("/register")({
@@ -95,6 +96,16 @@ function Register() {
         user_id: user.id,
         name,
       });
+
+      await notifyRoles(
+        {
+          title: "Nueva cuenta creada",
+          description: `${name.trim()} (${email}) se registró como ${ROLES.find((r) => r.id === role)?.label.toLowerCase()}.`,
+          tone: "success",
+          icon: "UserPlus",
+        },
+        ["admin"],
+      );
     }
 
     try {
@@ -233,13 +244,13 @@ function Register() {
           />
           <span>
             Acepto los{" "}
-            <a href="#" className="font-medium text-primary hover:underline">
+            <Link to="/terms" className="font-medium text-primary hover:underline">
               Términos
-            </a>{" "}
+            </Link>{" "}
             y la{" "}
-            <a href="#" className="font-medium text-primary hover:underline">
+            <Link to="/privacy" className="font-medium text-primary hover:underline">
               Política de privacidad
-            </a>
+            </Link>
             .
           </span>
         </label>

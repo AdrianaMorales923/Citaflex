@@ -15,6 +15,7 @@ import {
   History,
   CalendarDays,
   Globe,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRole, ROLE_LABEL, type Role, type RolePermission } from "@/lib/role-context";
@@ -38,6 +39,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { to: "/app/reports", label: "Reportes", icon: FileBarChart2, perm: "reports" },
     { to: "/app/staff", label: "Personal", icon: UserCog, perm: "staff.manage" },
     { to: "/app/profile", label: "Mi perfil", icon: UserCircle, perm: "profile" },
+    { to: "/app/notifications", label: "Notificaciones", icon: Bell, perm: "notifications" },
     { to: "/app/settings", label: "Configuración", icon: Settings, perm: "settings" },
   ],
   staff: [
@@ -45,11 +47,13 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { to: "/app/appointments", label: "Mis citas", icon: Calendar, perm: "appointments" },
     { to: "/app/clients", label: "Clientes", icon: Users, perm: "clients" },
     { to: "/app/profile", label: "Mi perfil", icon: UserCircle, perm: "profile" },
+    { to: "/app/notifications", label: "Notificaciones", icon: Bell, perm: "notifications" },
   ],
   client: [
     { to: "/app/my-appointments", label: "Mis citas", icon: CalendarDays, perm: "my-appointments" },
     { to: "/app/history", label: "Historial", icon: History, perm: "history" },
     { to: "/app/profile", label: "Mi perfil", icon: UserCircle, perm: "profile" },
+    { to: "/app/notifications", label: "Notificaciones", icon: Bell, perm: "notifications" },
     { to: "/book", label: "Reservar cita", icon: Globe, perm: "book" },
   ],
 };

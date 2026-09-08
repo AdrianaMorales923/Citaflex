@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useBusiness } from "@/lib/business-settings";
 import { useAuth } from "@/lib/auth-context";
+import { notifyRoles } from "@/lib/use-notifications";
 import supabase from "@/lib/supabase";
 
 export const Route = createFileRoute("/book")({ component: PublicBooking });
@@ -298,6 +299,14 @@ function PublicBooking() {
         status: settings.booking.manualConfirm ? "Pendiente" : "Confirmada",
       });
       if (error) throw new Error(error.message);
+
+      await notifyRoles({
+        title: "Nueva reserva online",
+        description: `${name.trim()} reservó ${service.name} con ${staffMember.name} el ${dateStr(date)} a las ${time}.`,
+        tone: "primary",
+        icon: "Calendar",
+      });
+
       toast.success(
         settings.booking.manualConfirm
           ? "Cita agendada. El negocio la confirmará pronto."

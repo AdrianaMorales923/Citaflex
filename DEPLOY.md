@@ -49,4 +49,5 @@ Despues de guardarlas, vuelve a desplegar (**Redeploy**).
 - Supabase Auth requiere que el correo este confirmado en produccion. Para la
   demo, desactiva "Confirm email" en **Supabase > Authentication > Providers**,
   o usa los usuarios de la semilla (ya confirmados).
-- Si cambias rutas, regenera el arbol: `npm run dev` lo hace automaticamente.
+- Si cambias rutas, regenera el arbol de rutas antes de desplegar:
+  `npx @tanstack/router-cli generate` (el repo no usa el plugin de Vite).

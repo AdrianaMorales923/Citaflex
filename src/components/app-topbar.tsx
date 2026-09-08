@@ -1,5 +1,5 @@
 import { Menu, Search, Bell, Plus, Check, LogOut, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
@@ -20,6 +20,23 @@ export function AppTopbar({ onMenuClick, title }: { onMenuClick: () => void; tit
   const { role } = useRole();
   const { notifs, unread, markAllRead, markRead, clearAll } = useNotifications();
   const [creating, setCreating] = useState(false);
+  const [query, setQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const goSearch = () => {
+    navigate({ to: "/app/clients", search: { q: query.trim() || undefined } });
+  };
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const handleNewAppointment = async () => {
     if (creating) return;
@@ -56,7 +73,13 @@ export function AppTopbar({ onMenuClick, title }: { onMenuClick: () => void; tit
         <div className="hidden items-center rounded-lg border border-input bg-card px-3 transition-colors focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10 md:flex">
           <Search className="h-4 w-4 text-muted-foreground" />
           <input
-            placeholder="Buscar..."
+            ref={searchRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") goSearch();
+            }}
+            placeholder="Buscar clientes..."
             className="w-48 bg-transparent px-2.5 py-2 text-sm outline-none placeholder:text-muted-foreground/60 lg:w-56"
           />
           <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
@@ -64,9 +87,9 @@ export function AppTopbar({ onMenuClick, title }: { onMenuClick: () => void; tit
           </kbd>
         </div>
         <button
-          onClick={() => toast.info("Búsqueda rápida disponible próximamente")}
+          onClick={() => navigate({ to: "/app/clients", search: { q: undefined } })}
           className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card transition-all hover:bg-accent hover:shadow-sm active:scale-95 md:hidden"
-          aria-label="Buscar"
+          aria-label="Buscar clientes"
         >
           <Search className="h-4 w-4" />
         </button>
@@ -157,7 +180,7 @@ export function AppTopbar({ onMenuClick, title }: { onMenuClick: () => void; tit
             </ul>
             <div className="border-t border-border px-4 py-2">
               <button
-                onClick={() => toast.info("Centro de notificaciones próximamente")}
+                onClick={() => navigate({ to: "/app/notifications" })}
                 className="flex w-full items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
                 <Check className="h-3 w-3" /> Ver todas

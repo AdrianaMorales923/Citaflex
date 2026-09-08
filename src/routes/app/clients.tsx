@@ -55,7 +55,12 @@ import supabase from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { createNotification } from "@/lib/use-notifications";
 
-export const Route = createFileRoute("/app/clients")({ component: Clients });
+export const Route = createFileRoute("/app/clients")({
+  component: Clients,
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: typeof search.q === "string" ? search.q.slice(0, 80) : undefined,
+  }),
+});
 
 type ClientTag = "VIP" | "Frecuente" | "Nuevo" | "Inactivo";
 
@@ -162,9 +167,10 @@ function mapDbClient(row: any): Client {
 export default function Clients() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const routeSearch = Route.useSearch();
   const [clientsData, setClientsData] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(routeSearch.q ?? "");
   const [filterTag, setFilterTag] = useState<ClientTag | "Todas">("Todas");
   const [sortBy, setSortBy] = useState<"name" | "visits" | "spent" | "recent">("recent");
   const [createOpen, setCreateOpen] = useState(false);
@@ -525,6 +531,7 @@ export default function Clients() {
                         <Link
                           to="/app/clients/$id"
                           params={{ id: c.id }}
+                          search={{ q: undefined }}
                           className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10"
                         >
                           Ver <ChevronRight className="h-3 w-3" />
@@ -541,7 +548,11 @@ export default function Clients() {
                           <DropdownMenuContent align="end" className="w-48">
                             <DropdownMenuItem
                               onClick={() =>
-                                navigate({ to: "/app/clients/$id", params: { id: c.id } })
+                                navigate({
+                                  to: "/app/clients/$id",
+                                  params: { id: c.id },
+                                  search: { q: undefined },
+                                })
                               }
                             >
                               <Eye className="mr-2 h-4 w-4" /> Ver perfil
@@ -587,6 +598,7 @@ export default function Clients() {
               key={c.id}
               to="/app/clients/$id"
               params={{ id: c.id }}
+              search={{ q: undefined }}
               className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm transition active:scale-[0.99]"
             >
               <div className="flex items-start gap-3">

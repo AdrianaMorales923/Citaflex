@@ -8,3 +8,5 @@ bun.lock
 routeTree.gen.ts
 .supabase
 session-ses_f8d4.md
+qa
+qa-results

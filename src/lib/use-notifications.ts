@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Calendar, UserPlus, Star, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import supabase from "./supabase";
 import { useAuth } from "./auth-context";
+
+type RealtimePayload = RealtimePostgresChangesPayload<Record<string, unknown>>;
 
 export type NotifTone = "primary" | "success" | "warning";
 
@@ -86,6 +89,52 @@ export function useNotifications() {
     fetchNotifs();
   }, [fetchNotifs]);
 
+  // Realtime: las notificaciones llegan sin recargar. RLS garantiza que solo
+  // veas las tuyas (user_id = auth.uid()).
+  useEffect(() => {
+    if (!user) return;
+
+    const onInsert = (payload: RealtimePayload) => {
+      const row = payload.new as DbNotification | null;
+      if (!row) return;
+      setNotifs((prev) => [mapDbNotif(row), ...prev.filter((n) => n.id !== row.id)].slice(0, 50));
+    };
+    const onUpdate = (payload: RealtimePayload) => {
+      const row = payload.new as DbNotification | null;
+      if (!row) return;
+      setNotifs((prev) => prev.map((n) => (n.id === row.id ? mapDbNotif(row) : n)));
+    };
+    const onDelete = (payload: RealtimePayload) => {
+      const id = (payload.old as { id?: string } | null)?.id;
+      if (!id) return;
+      setNotifs((prev) => prev.filter((n) => n.id !== id));
+    };
+    const filter = `user_id=eq.${user.id}`;
+
+    const channel = supabase
+      .channel(`notifications-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications", filter },
+        onInsert,
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "notifications", filter },
+        onUpdate,
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "notifications", filter },
+        onDelete,
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const unread = notifs.filter((n) => !n.read).length;
 
   const markAllRead = useCallback(async () => {
@@ -114,17 +163,42 @@ export function useNotifications() {
 
 /**
  * Create a notification in the database.
- * Call this from any component that performs an action worth notifying about.
+ * Uses the `create_notification` RPC (security definer) so it works for any
+ * acting user (auth or anon, e.g. the public `/book` page) and can target
+ * other users (admin, staff) without needing INSERT on their feed.
  */
 export async function createNotification(
   userId: string,
   opts: { title: string; description: string; tone?: NotifTone; icon?: string },
 ) {
-  await supabase.from("notifications").insert({
+  const { error } = await supabase.rpc("create_notification", {
     user_id: userId,
     title: opts.title,
     description: opts.description,
     tone: opts.tone ?? "primary",
     icon: opts.icon ?? "Calendar",
   });
+  if (error) console.warn("create_notification:", error.message);
+}
+
+type NotifyRole = "admin" | "staff";
+
+/**
+ * Notify every registered user of the given roles (defaults to admins + staff).
+ * Recipients are resolved server-side by the `notify_roles` RPC (security
+ * definer), so it also works from the public anon `/book` page where RLS
+ * blocks reading `users`.
+ */
+export async function notifyRoles(
+  opts: { title: string; description: string; tone?: NotifTone; icon?: string },
+  roles: NotifyRole[] = ["admin", "staff"],
+) {
+  const { error } = await supabase.rpc("notify_roles", {
+    roles,
+    title: opts.title,
+    description: opts.description,
+    tone: opts.tone ?? "primary",
+    icon: opts.icon ?? "Calendar",
+  });
+  if (error) console.warn("notify_roles:", error.message);
 }

@@ -50,10 +50,10 @@ function Landing() {
               Precios
             </a>
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 sm:gap-4">
             <Link
               to="/login"
-              className="hidden text-sm font-medium text-muted-foreground hover:text-foreground sm:inline-block"
+              className="hidden py-2 text-sm font-medium text-muted-foreground hover:text-foreground sm:inline-block"
             >
               Entrar
             </Link>
@@ -265,15 +265,15 @@ function Landing() {
             <span>© 2026 Citaflex · Barranquilla, Colombia</span>
           </div>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-foreground">
+            <Link to="/terms" className="hover:text-foreground">
               Términos
-            </a>
-            <a href="#" className="hover:text-foreground">
+            </Link>
+            <Link to="/privacy" className="hover:text-foreground">
               Privacidad
-            </a>
-            <a href="#" className="hover:text-foreground">
+            </Link>
+            <Link to="/contact" className="hover:text-foreground">
               Contacto
-            </a>
+            </Link>
           </div>
         </div>
       </footer>

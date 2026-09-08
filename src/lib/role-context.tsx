@@ -28,7 +28,8 @@ export type RolePermission =
   | "profile"
   | "my-appointments"
   | "history"
-  | "book";
+  | "book"
+  | "notifications";
 
 export const ROLE_LABEL: Record<Role, string> = {
   admin: "Administrador",
@@ -57,6 +58,7 @@ const PERMISSIONS: Record<Role, RolePermission[]> = {
     "staff.manage",
     "settings",
     "profile",
+    "notifications",
   ],
   staff: [
     "dashboard",
@@ -65,8 +67,9 @@ const PERMISSIONS: Record<Role, RolePermission[]> = {
     "appointments.status",
     "clients",
     "profile",
+    "notifications",
   ],
-  client: ["profile", "my-appointments", "history", "book"],
+  client: ["profile", "my-appointments", "history", "book", "notifications"],
 };
 
 export interface UserProfile {

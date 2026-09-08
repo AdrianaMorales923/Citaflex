@@ -43,5 +43,6 @@ tsconfig.tsbuildinfo
 .agents/
 skills-lock.json
 
-# Supabase SQL File
-supabase/
+# QA / E2E autónomo (no versionado, portable)
+qa/
+qa-results/

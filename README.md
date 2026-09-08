@@ -37,8 +37,8 @@ Plataforma SaaS para gestionar citas, clientes y servicios, disenada para profes
 - **En espanol:** Interfaz completa con moneda COP.
 
 > Estado de implementacion abajo en [Estado de implementacion](#estado-de-implementacion):
-> algunas vistas todavia usan datos de demostracion hardcodeados y se estan
-> conectando a Supabase por partes.
+> el detalle de cliente (`/app/clients/$id`) todavia usa datos de demostracion
+> hardcodeados; el resto de vistas esta conectado a Supabase.
 
 ## Inicio rapido
 
@@ -82,7 +82,7 @@ ultimos 365 dias) para que el dashboard y los reportes muestren datos de inmedia
 | Servicios `/app/services`               | Conectado (CRUD + asignacion de personal)                               |
 | Personal `/app/staff`                   | Conectado (listado + conteo de citas)                                   |
 | Login / Registro / Recuperar contrasena | Conectado a Supabase Auth                                               |
-| Reserva publica `/book`                 | **Demo** (datos hardcodeados)                                           |
+| Reserva publica `/book`                 | Conectado (lee la BD real y crea citas)                                 |
 | Estadisticas `/app/statistics`          | Conectado a Supabase (con filtros y exportacion CSV/PDF)                |
 | Reportes `/app/reports`                 | Conectado a Supabase (5 fuentes + exportacion)                          |
 | Configuracion `/app/settings`           | Conectado (perfil, horarios, equipo, notificaciones, marca)             |

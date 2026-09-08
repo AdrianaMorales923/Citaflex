@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
 import { MobileNav } from "@/components/mobile-nav";
-import { Toaster } from "@/components/ui/sonner";
 import { RoleProvider, useRole, type RolePermission } from "@/lib/role-context";
 import { useAuth } from "@/lib/auth-context";
 import { Lock } from "lucide-react";
@@ -22,6 +21,7 @@ const titles: Record<string, string> = {
   "/app/staff": "Personal",
   "/app/settings": "Configuración",
   "/app/profile": "Mi perfil",
+  "/app/notifications": "Notificaciones",
   "/app/my-appointments": "Mis citas",
   "/app/history": "Historial",
 };
@@ -36,6 +36,7 @@ const ROUTE_PERMISSIONS: { prefix: string; perm: RolePermission; exact?: boolean
   { prefix: "/app/staff", perm: "staff.manage" },
   { prefix: "/app/settings", perm: "settings" },
   { prefix: "/app/profile", perm: "profile" },
+  { prefix: "/app/notifications", perm: "notifications" },
   { prefix: "/app/my-appointments", perm: "my-appointments" },
   { prefix: "/app/history", perm: "history" },
 ];
@@ -95,7 +96,6 @@ function AppLayout() {
         </main>
       </div>
       <MobileNav />
-      <Toaster position="top-right" richColors />
     </div>
   );
 }
@@ -109,8 +109,8 @@ function NoAccess() {
       </div>
       <h2 className="font-display text-xl font-bold">Acceso restringido</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Esta sección no está disponible para el rol <strong>{role}</strong>. Usa el selector de rol
-        en la esquina superior derecha para cambiar la vista de demostración.
+        Esta sección no está disponible para el rol <strong>{role}</strong>. Inicia sesión con el
+        usuario admin o staff para acceder a ella.
       </p>
     </div>
   );
