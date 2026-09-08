@@ -172,16 +172,32 @@ function Appointments() {
     );
     setStaffList((staffRes.data ?? []).map((s) => ({ id: s.id, name: s.name, role: s.role })));
 
-    const { data: apptData } = await supabase
-      .from("appointments")
-      .select("id, date, time, client_id, service_id, staff_id, status, notes")
-      .order("date");
+    const apptRows: Array<{
+      id: string;
+      date: string;
+      time: string;
+      client_id: string;
+      service_id: string;
+      staff_id: string;
+      status: string;
+      notes: string | null;
+    }> = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("id, date, time, client_id, service_id, staff_id, status, notes")
+        .order("date")
+        .range(from, from + 999);
+      if (error) break;
+      apptRows.push(...(data ?? []));
+      if ((data ?? []).length < 1000) break;
+    }
 
     setAppts(
-      (apptData ?? []).map((a) => ({
+      apptRows.map((a) => ({
         id: a.id,
         date: a.date,
-        time: a.time,
+        time: a.time?.slice(0, 5) ?? a.time,
         clientId: a.client_id,
         serviceId: a.service_id,
         staffId: a.staff_id,
@@ -687,7 +703,21 @@ function AppointmentDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editing?.id, prefill.date, prefill.time]);
 
+  useEffect(() => {
+    if (!open || editing) return;
+    setForm((f) => ({
+      ...f,
+      clientId: f.clientId || clientsList[0]?.id || "",
+      serviceId: f.serviceId || servicesList[0]?.id || "",
+      staffId: f.staffId || staffList[0]?.id || "",
+    }));
+  }, [open, clientsList, servicesList, staffList, editing]);
+
   const set = <K extends keyof Appt>(k: K, v: Appt[K]) => setForm((f) => ({ ...f, [k]: v }));
+
+  const canSave = Boolean(
+    form.date && form.time && form.clientId && form.serviceId && form.staffId,
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -839,7 +869,7 @@ function AppointmentDialog({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cerrar
             </Button>
-            <Button onClick={() => onSave(form)}>
+            <Button onClick={() => onSave(form)} disabled={!canSave}>
               {isEdit ? "Guardar cambios" : "Crear cita"}
             </Button>
           </div>

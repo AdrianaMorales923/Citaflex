@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { formatMoney } from "@/lib/money";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -168,6 +168,8 @@ export default function Clients() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const routeSearch = Route.useSearch();
+  const routerState = useRouterState();
+  const atDetail = routerState.location.pathname.startsWith("/app/clients/");
   const [clientsData, setClientsData] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(routeSearch.q ?? "");
@@ -222,6 +224,8 @@ export default function Clients() {
     });
     return list;
   }, [search, filterTag, sortBy, clientsData]);
+
+  if (atDetail) return <Outlet />;
 
   const vipCount = clientsData.filter((c) => c.tag === "VIP").length;
   const activeCount = clientsData.filter((c) => c.tag !== "Inactivo").length;

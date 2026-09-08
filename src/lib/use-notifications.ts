@@ -7,6 +7,8 @@ import { useAuth } from "./auth-context";
 
 type RealtimePayload = RealtimePostgresChangesPayload<Record<string, unknown>>;
 
+let channelSeq = 0;
+
 export type NotifTone = "primary" | "success" | "warning";
 
 export interface Notification {
@@ -112,7 +114,7 @@ export function useNotifications() {
     const filter = `user_id=eq.${user.id}`;
 
     const channel = supabase
-      .channel(`notifications-${user.id}`)
+      .channel(`notifications-${user.id}-${channelSeq++}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications", filter },
