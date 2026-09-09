@@ -146,7 +146,7 @@ export function bucketLabels(range: RangeKey, bounds: RangeBounds): string[] {
 }
 
 /** Índice del bucket al que pertenece una fecha dentro del rango. */
-export function bucketIndex(range: RangeKey, bounds: RangeBounds, dateISO: string): number {
+function bucketIndex(range: RangeKey, bounds: RangeBounds, dateISO: string): number {
   const d = new Date(`${dateISO}T00:00:00`);
   if (range === "week") return (d.getDay() + 6) % 7;
   if (range === "month")
@@ -193,7 +193,7 @@ export function byWeekday(records: ApptRecord[]) {
   return WD_LABELS.map((d, i) => ({ d, completadas: done[i], canceladas: cancelled[i] }));
 }
 
-export const CHART_COLORS = [
+const CHART_COLORS = [
   "var(--chart-1)",
   "var(--chart-2)",
   "var(--chart-3)",

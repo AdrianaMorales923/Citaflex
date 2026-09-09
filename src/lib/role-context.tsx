@@ -37,7 +37,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   client: "Cliente",
 };
 
-export const ROLE_DESCRIPTION: Record<Role, string> = {
+const ROLE_DESCRIPTION: Record<Role, string> = {
   admin: "Acceso total al negocio y su equipo.",
   staff: "Gestiona tus citas y clientes asignados.",
   client: "Reserva y consulta tus citas.",

@@ -43,6 +43,9 @@ tsconfig.tsbuildinfo
 .agents/
 skills-lock.json
 
+# Skill local de QA (solo vive en este proyecto, no se versiona)
+.opencode/
+
 # QA / E2E autónomo (no versionado, portable)
 qa/
 qa-results/

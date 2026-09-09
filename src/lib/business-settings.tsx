@@ -54,10 +54,10 @@ export type Business = {
   logo_url: string;
 };
 
-export const DEFAULT_TEMPLATE =
+const DEFAULT_TEMPLATE =
   "Hola {nombre}, te recordamos tu cita de {servicio} en {negocio} el {fecha} a las {hora}. ¡Te esperamos!";
 
-export const DEFAULT_SETTINGS: BusinessSettings = {
+const DEFAULT_SETTINGS: BusinessSettings = {
   slotMinutes: 30,
   brandColor: "",
   language: "es-CO",

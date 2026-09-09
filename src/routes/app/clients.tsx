@@ -164,7 +164,7 @@ function mapDbClient(row: any): Client {
   };
 }
 
-export default function Clients() {
+function Clients() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const routeSearch = Route.useSearch();
