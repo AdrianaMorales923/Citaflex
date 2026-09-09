@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Bell, Check, CheckCheck, Trash2 } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { AlertCircle, Bell, Check, CheckCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useNotifications } from "@/lib/use-notifications";
+import { useNotifications, type Notification } from "@/lib/use-notifications";
+import { useRole } from "@/lib/role-context";
 
 export const Route = createFileRoute("/app/notifications")({ component: Notifications });
 
@@ -13,11 +14,29 @@ const toneStyles: Record<string, string> = {
 };
 
 function Notifications() {
-  const { notifs, unread, markAllRead, markRead, clearAll, loading } = useNotifications();
+  const { notifs, unread, markAllRead, markRead, clearAll, remove, loading, error, refetch } =
+    useNotifications();
+  const navigate = useNavigate();
+  const { role } = useRole();
 
   const handleClearAll = async () => {
     await clearAll();
     toast.success("Notificaciones eliminadas");
+  };
+
+  const handleRemove = async (id: string) => {
+    await remove(id);
+    toast.success("Notificación eliminada");
+  };
+
+  // Click: marca leida y, si la notificacion tiene cita asociada, navega a ella.
+  const handleOpen = (n: Notification) => {
+    markRead(n.id);
+    if (!n.appointmentId) return;
+    navigate({
+      to: role === "client" ? "/app/my-appointments" : "/app/appointments",
+      search: { cita: n.appointmentId },
+    });
   };
 
   return (
@@ -53,6 +72,18 @@ function Notifications() {
           <p className="py-16 text-center text-sm text-muted-foreground">
             Cargando notificaciones...
           </p>
+        ) : error ? (
+          <div className="py-16 text-center text-muted-foreground">
+            <AlertCircle className="mx-auto mb-3 h-8 w-8 opacity-30" />
+            <p className="text-sm font-medium">No se pudieron cargar las notificaciones.</p>
+            <p className="text-xs">Revisa tu conexión y vuelve a intentarlo.</p>
+            <button
+              onClick={refetch}
+              className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-input px-3 py-2 text-sm font-medium hover:bg-accent"
+            >
+              Reintentar
+            </button>
+          </div>
         ) : notifs.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground">
             <Bell className="mx-auto mb-3 h-8 w-8 opacity-30" />
@@ -64,42 +95,52 @@ function Notifications() {
             {notifs.map((n) => {
               const Icon = n.icon;
               return (
-                <li key={n.id}>
-                  <button
-                    onClick={() => markRead(n.id)}
-                    className={cn(
-                      "flex w-full items-start gap-3 px-4 py-4 text-left transition-colors hover:bg-accent/60 sm:px-5",
-                      !n.read && "bg-primary/[0.03]",
-                    )}
-                  >
-                    <span
+                <li key={n.id} className="group">
+                  <div className="flex items-stretch">
+                    <button
+                      onClick={() => handleOpen(n)}
                       className={cn(
-                        "mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg",
-                        toneStyles[n.tone] ?? toneStyles.primary,
+                        "flex min-w-0 flex-1 items-start gap-3 px-4 py-4 text-left transition-colors hover:bg-accent/60 sm:px-5",
+                        !n.read && "bg-primary/[0.03]",
                       )}
                     >
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-2">
-                        <span className="truncate text-sm font-semibold">{n.title}</span>
-                        {!n.read && (
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                      <span
+                        className={cn(
+                          "mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg",
+                          toneStyles[n.tone] ?? toneStyles.primary,
                         )}
+                      >
+                        <Icon className="h-4 w-4" />
                       </span>
-                      <span className="line-clamp-2 block text-xs text-muted-foreground">
-                        {n.description}
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-2">
+                          <span className="truncate text-sm font-semibold">{n.title}</span>
+                          {!n.read && (
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                          )}
+                        </span>
+                        <span className="line-clamp-2 block text-xs text-muted-foreground">
+                          {n.description}
+                        </span>
+                        <span className="mt-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                          {n.time}
+                        </span>
                       </span>
-                      <span className="mt-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                        {n.time}
-                      </span>
-                    </span>
-                    {!n.read && (
-                      <span className="mt-0.5 hidden shrink-0 items-center gap-1 text-[10px] font-medium text-primary sm:flex">
-                        <Check className="h-3 w-3" /> Marcar leída
-                      </span>
-                    )}
-                  </button>
+                      {!n.read && (
+                        <span className="mt-0.5 hidden shrink-0 items-center gap-1 text-[10px] font-medium text-primary sm:flex">
+                          <Check className="h-3 w-3" /> Marcar leída
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleRemove(n.id)}
+                      aria-label={`Eliminar notificación: ${n.title}`}
+                      title="Eliminar"
+                      className="flex shrink-0 items-center border-l border-border px-3 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive sm:px-4"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </li>
               );
             })}

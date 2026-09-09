@@ -19,6 +19,7 @@ export interface Notification {
   time: string;
   read: boolean;
   tone: NotifTone;
+  appointmentId?: string | null;
 }
 
 interface DbNotification {
@@ -30,6 +31,7 @@ interface DbNotification {
   icon: string;
   read: boolean;
   created_at: string;
+  appointment_id: string | null;
 }
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -44,6 +46,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 function timeAgo(dateStr: string): string {
   const now = new Date();
   const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "";
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
   if (seconds < 60) return "Ahora mismo";
@@ -62,6 +65,7 @@ function mapDbNotif(row: DbNotification): Notification {
     time: timeAgo(row.created_at),
     read: row.read,
     tone: (row.tone as NotifTone) ?? "primary",
+    appointmentId: row.appointment_id,
   };
 }
 
@@ -69,22 +73,31 @@ export function useNotifications() {
   const { user } = useAuth();
   const [notifs, setNotifs] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchNotifs = useCallback(async () => {
     if (!user) {
       setLoading(false);
+      setError(null);
       return;
     }
 
-    const { data } = await supabase
-      .from("notifications")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(50);
-
-    setNotifs((data ?? []).map(mapDbNotif));
-    setLoading(false);
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: err } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (err) throw err;
+      setNotifs((data ?? []).map(mapDbNotif));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudieron cargar las notificaciones");
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => {
@@ -160,7 +173,23 @@ export function useNotifications() {
     setNotifs([]);
   }, [user]);
 
-  return { notifs, unread, loading, markAllRead, markRead, clearAll, refetch: fetchNotifs };
+  const remove = useCallback(async (id: string) => {
+    const { error: err } = await supabase.from("notifications").delete().eq("id", id);
+    if (err) console.warn("remove_notification:", err.message);
+    setNotifs((prev) => prev.filter((n) => n.id !== id));
+  }, []);
+
+  return {
+    notifs,
+    unread,
+    loading,
+    error,
+    markAllRead,
+    markRead,
+    clearAll,
+    remove,
+    refetch: fetchNotifs,
+  };
 }
 
 /**
@@ -171,15 +200,25 @@ export function useNotifications() {
  */
 export async function createNotification(
   userId: string,
-  opts: { title: string; description: string; tone?: NotifTone; icon?: string },
+  opts: {
+    title: string;
+    description: string;
+    tone?: NotifTone;
+    icon?: string;
+    appointmentId?: string | null;
+  },
 ) {
-  const { error } = await supabase.rpc("create_notification", {
+  const params: Record<string, unknown> = {
     user_id: userId,
     title: opts.title,
     description: opts.description,
     tone: opts.tone ?? "primary",
     icon: opts.icon ?? "Calendar",
-  });
+  };
+  // Retrocompatible: appointment_id solo se envía cuando existe (columna
+  // añadida al re-ejecutar database.sql). Sin él, se usa el RPC de 5 args.
+  if (opts.appointmentId) params.appointment_id = opts.appointmentId;
+  const { error } = await supabase.rpc("create_notification", params);
   if (error) console.warn("create_notification:", error.message);
 }
 
@@ -192,15 +231,23 @@ type NotifyRole = "admin" | "staff";
  * blocks reading `users`.
  */
 export async function notifyRoles(
-  opts: { title: string; description: string; tone?: NotifTone; icon?: string },
+  opts: {
+    title: string;
+    description: string;
+    tone?: NotifTone;
+    icon?: string;
+    appointmentId?: string | null;
+  },
   roles: NotifyRole[] = ["admin", "staff"],
 ) {
-  const { error } = await supabase.rpc("notify_roles", {
+  const params: Record<string, unknown> = {
     roles,
     title: opts.title,
     description: opts.description,
     tone: opts.tone ?? "primary",
     icon: opts.icon ?? "Calendar",
-  });
+  };
+  if (opts.appointmentId) params.appointment_id = opts.appointmentId;
+  const { error } = await supabase.rpc("notify_roles", params);
   if (error) console.warn("notify_roles:", error.message);
 }

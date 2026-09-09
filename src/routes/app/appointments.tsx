@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Plus,
@@ -53,6 +53,7 @@ export const Route = createFileRoute("/app/appointments")({
   component: Appointments,
   validateSearch: (search: Record<string, unknown>) => ({
     new: search.new === 1 || search.new === "1" ? 1 : undefined,
+    cita: typeof search.cita === "string" ? search.cita : undefined,
   }),
 });
 
@@ -137,6 +138,8 @@ function Appointments() {
   const [staffList, setStaffList] = useState<LookupItem[]>([]);
 
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [editing, setEditing] = useState<Appt | null>(null);
   const [prefill, setPrefill] = useState<{ date?: string; time?: string }>({});
 
@@ -145,9 +148,21 @@ function Appointments() {
       setEditing(null);
       setPrefill({});
       setOpen(true);
-      navigate({ search: { new: undefined }, replace: true });
+      navigate({ search: { new: undefined, cita: undefined }, replace: true });
     }
   }, [search.new, navigate]);
+
+  // Llegada desde una notificacion (?cita=<id>): abrir la cita referida.
+  useEffect(() => {
+    const id = search.cita;
+    if (!id) return;
+    const appt = appts.find((a) => a.id === id);
+    if (!appt) return;
+    setEditing(appt);
+    setPrefill({});
+    setOpen(true);
+    navigate({ search: { cita: undefined, new: undefined }, replace: true });
+  }, [search.cita, appts, navigate]);
 
   const [cancelTarget, setCancelTarget] = useState<Appt | null>(null);
 
@@ -249,45 +264,58 @@ function Appointments() {
   };
 
   const upsert = async (a: Appt) => {
-    const dbPayload = {
-      date: a.date,
-      time: a.time,
-      client_id: a.clientId,
-      service_id: a.serviceId,
-      staff_id: a.staffId,
-      status: a.status,
-      notes: a.notes || null,
-    };
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      const dbPayload = {
+        date: a.date,
+        time: a.time,
+        client_id: a.clientId,
+        service_id: a.serviceId,
+        staff_id: a.staffId,
+        status: a.status,
+        notes: a.notes || null,
+      };
 
-    if (editing) {
-      const { error } = await supabase.from("appointments").update(dbPayload).eq("id", editing.id);
-      if (error) {
-        toast.error("Error: " + error.message);
-        return;
-      }
-      toast.success("Cita actualizada");
-    } else {
-      const { error } = await supabase.from("appointments").insert(dbPayload);
-      if (error) {
-        toast.error("Error: " + error.message);
-        return;
-      }
-      toast.success("Cita creada");
+      if (editing) {
+        const { error } = await supabase
+          .from("appointments")
+          .update(dbPayload)
+          .eq("id", editing.id);
+        if (error) {
+          toast.error("Error: " + error.message);
+          return;
+        }
+        toast.success("Cita actualizada");
+      } else {
+        const newId = crypto.randomUUID();
+        const { error } = await supabase.from("appointments").insert({ ...dbPayload, id: newId });
+        if (error) {
+          toast.error("Error: " + error.message);
+          return;
+        }
+        toast.success("Cita creada");
 
-      // Create notification
-      if (user) {
-        const clientName = clientsList.find((c) => c.id === a.clientId)?.name ?? "Cliente";
-        const serviceName = servicesList.find((s) => s.id === a.serviceId)?.name ?? "Servicio";
-        createNotification(user.id, {
-          title: "Nueva cita creada",
-          description: `${clientName} · ${serviceName} el ${a.date} a las ${a.time}`,
-          tone: "primary",
-          icon: "Calendar",
-        });
+        // Create notification
+        if (user) {
+          const clientName = clientsList.find((c) => c.id === a.clientId)?.name ?? "Cliente";
+          const serviceName = servicesList.find((s) => s.id === a.serviceId)?.name ?? "Servicio";
+          createNotification(user.id, {
+            title: "Nueva cita creada",
+            description: `${clientName} · ${serviceName} el ${a.date} a las ${a.time}`,
+            tone: "primary",
+            icon: "Calendar",
+            appointmentId: newId,
+          });
+        }
       }
+      setOpen(false);
+      fetchData();
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
     }
-    setOpen(false);
-    fetchData();
   };
 
   const cancel = async (a: Appt) => {
@@ -309,6 +337,7 @@ function Appointments() {
           description: `Cita de ${clientName} el ${a.date} a las ${a.time} fue cancelada.`,
           tone: "warning",
           icon: "AlertCircle",
+          appointmentId: a.id,
         });
       }
     }
@@ -420,6 +449,7 @@ function Appointments() {
         onSave={(a) => {
           upsert(a);
         }}
+        saving={saving}
         onCancelAppt={(a) => {
           setOpen(false);
           setCancelTarget(a);
@@ -673,6 +703,7 @@ function AppointmentDialog({
   staffList,
   onSave,
   onCancelAppt,
+  saving,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -683,6 +714,7 @@ function AppointmentDialog({
   staffList: LookupItem[];
   onSave: (a: Appt) => void;
   onCancelAppt: (a: Appt) => void;
+  saving: boolean;
 }) {
   const isEdit = !!editing;
   const initial: Appt = editing ?? {
@@ -869,8 +901,8 @@ function AppointmentDialog({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cerrar
             </Button>
-            <Button onClick={() => onSave(form)} disabled={!canSave}>
-              {isEdit ? "Guardar cambios" : "Crear cita"}
+            <Button onClick={() => onSave(form)} disabled={!canSave || saving}>
+              {saving ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear cita"}
             </Button>
           </div>
         </DialogFooter>

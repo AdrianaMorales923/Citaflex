@@ -235,11 +235,25 @@ begin
 end $$;
 commit;
 
+-- Moneda del negocio: la app solo soporta COP y USD (AGENTS.md); el check evita
+-- valores invalidos al insertar/editar.
+do $$
+begin
+  begin
+    alter table public.businesses add constraint businesses_currency_valid
+      check (currency in ('COP', 'USD'));
+  exception when duplicate_object then null;
+  end;
+end $$;
+commit;
+
 -- Indices para las FK mas consultadas (faltaban: la agenda filtra por
 -- business_id/fecha/staff; el ledger agrupa por negocio y staff).
 create index if not exists appointments_business_idx on public.appointments (business_id);
 commit;
 create index if not exists appointments_staff_idx    on public.appointments (staff_id);
+commit;
+create index if not exists appointments_service_idx   on public.appointments (service_id);
 commit;
 create index if not exists services_business_idx      on public.services (business_id);
 commit;
@@ -359,23 +373,47 @@ drop policy if exists "clients_insert_anon" on public.clients;
 drop policy if exists "appointments_read_anon" on public.appointments;
 drop policy if exists "appointments_insert_anon" on public.appointments;
 
+-- ============================================================================
+-- 3.9) NOTIFICACIONES
+-- ============================================================================
+
+-- Vinculo opcional notificacion -> cita (click en la campana navega a la cita).
+-- DEBE ir ANTES de las funciones que insertan en notifications (referencian la
+-- columna); si el script falla en el create function, la columna no existe.
+alter table public.notifications add column if not exists appointment_id uuid;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'notifications_appointment_id_fkey'
+  ) then
+    alter table public.notifications
+      add constraint notifications_appointment_id_fkey
+      foreign key (appointment_id) references public.appointments(id) on delete cascade;
+  end if;
+end $$;
+commit;
+
 -- Funciones para crear notificaciones: se ejecutan como dueno de las tablas
 -- (security definer), asi cualquier flujo (reserva publica, registro, citas
 -- del panel) puede notificar a otros usuarios sin INSERT global en la app.
+-- appointment_id es opcional: cuando la notificacion se refiere a una cita,
+-- el frontend la usa para navegar a la cita al hacer click.
 create or replace function public.create_notification(
   user_id uuid,
   title text,
   description text,
   tone text default 'primary',
-  icon text default 'Calendar'
+  icon text default 'Calendar',
+  appointment_id uuid default null
 )
 returns void
 language sql
 security definer
 set search_path = ''
 as $$
-  insert into public.notifications (user_id, title, description, tone, icon)
-  values (user_id, title, description, tone, icon);
+  insert into public.notifications (user_id, title, description, tone, icon, appointment_id)
+  values (user_id, title, description, tone, icon, appointment_id);
 $$;
 
 create or replace function public.notify_roles(
@@ -383,23 +421,24 @@ create or replace function public.notify_roles(
   title text,
   description text,
   tone text default 'primary',
-  icon text default 'Calendar'
+  icon text default 'Calendar',
+  appointment_id uuid default null
 )
 returns void
 language sql
 security definer
 set search_path = ''
 as $$
-  insert into public.notifications (user_id, title, description, tone, icon)
-  select u.id, title, description, tone, icon
+  insert into public.notifications (user_id, title, description, tone, icon, appointment_id)
+  select u.id, title, description, tone, icon, appointment_id
   from public.users u
   where u.role = any(roles);
 $$;
 
-revoke all on function public.create_notification(uuid, text, text, text, text) from public;
-grant execute on function public.create_notification(uuid, text, text, text, text) to anon, authenticated;
-revoke all on function public.notify_roles(text[], text, text, text, text) from public;
-grant execute on function public.notify_roles(text[], text, text, text, text) to anon, authenticated;
+revoke all on function public.create_notification(uuid, text, text, text, text, uuid) from public;
+grant execute on function public.create_notification(uuid, text, text, text, text, uuid) to anon, authenticated;
+revoke all on function public.notify_roles(text[], text, text, text, text, uuid) from public;
+grant execute on function public.notify_roles(text[], text, text, text, text, uuid) to anon, authenticated;
 
 -- Notificaciones en tiempo real: la campanita se actualiza sin recargar.
 -- La app filtra por user_id al suscribirse, asi solo llegan las suyas.

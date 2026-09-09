@@ -21,7 +21,12 @@ import { useAuth } from "@/lib/auth-context";
 import { useBusiness } from "@/lib/business-settings";
 import supabase from "@/lib/supabase";
 
-export const Route = createFileRoute("/app/my-appointments")({ component: MyAppointments });
+export const Route = createFileRoute("/app/my-appointments")({
+  component: MyAppointments,
+  validateSearch: (search: Record<string, unknown>) => ({
+    cita: typeof search.cita === "string" ? search.cita : undefined,
+  }),
+});
 
 type Status = "Confirmada" | "Pendiente" | "Cancelada";
 
@@ -60,9 +65,28 @@ const TONE: Record<Status, string> = {
 function MyAppointments() {
   const { user } = useAuth();
   const { business } = useBusiness();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const [appts, setAppts] = useState<Appt[]>([]);
   const [historyCount, setHistoryCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  // Llegada desde una notificacion (?cita=<id>): resaltar la cita referida.
+  useEffect(() => {
+    if (!search.cita) return;
+    const appt = appts.find((a) => a.id === search.cita);
+    if (!appt) return;
+    setHighlightId(appt.id);
+    navigate({ search: { cita: undefined }, replace: true });
+    setTimeout(() => {
+      document
+        .getElementById(`cita-${appt.id}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+    const t = setTimeout(() => setHighlightId(null), 5000);
+    return () => clearTimeout(t);
+  }, [search.cita, appts, navigate]);
 
   const load = async () => {
     setLoading(true);
@@ -202,7 +226,12 @@ function MyAppointments() {
           {appts.map((a) => (
             <div
               key={a.id}
-              className={cn("card-surface p-5", a.status === "Cancelada" && "opacity-60")}
+              id={`cita-${a.id}`}
+              className={cn(
+                "card-surface p-5 transition-shadow",
+                a.status === "Cancelada" && "opacity-60",
+                highlightId === a.id && "ring-2 ring-primary/60 shadow-lg",
+              )}
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <div className="grid h-16 w-16 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary/15 to-chart-5/15 text-primary">

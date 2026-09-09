@@ -70,7 +70,7 @@ function AppLayout() {
   // Auto-redirect clients away from admin dashboard to their home
   useEffect(() => {
     if (role === "client" && path === "/app") {
-      navigate({ to: "/app/my-appointments", replace: true });
+      navigate({ to: "/app/my-appointments", search: { cita: undefined }, replace: true });
     }
   }, [role, path, navigate]);
 

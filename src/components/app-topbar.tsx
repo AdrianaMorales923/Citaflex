@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
-import { useNotifications } from "@/lib/use-notifications";
+import { useNotifications, type Notification } from "@/lib/use-notifications";
 import { useRole } from "@/lib/role-context";
 
 const toneStyles: Record<string, string> = {
@@ -18,7 +18,7 @@ export function AppTopbar({ onMenuClick, title }: { onMenuClick: () => void; tit
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { role } = useRole();
-  const { notifs, unread, markAllRead, markRead, clearAll } = useNotifications();
+  const { notifs, unread, markAllRead, markRead, clearAll, remove } = useNotifications();
   const [creating, setCreating] = useState(false);
   const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -47,7 +47,7 @@ export function AppTopbar({ onMenuClick, title }: { onMenuClick: () => void; tit
         toast.success("Abriendo formulario de reserva");
         return;
       }
-      await navigate({ to: "/app/appointments", search: { new: 1 } });
+      await navigate({ to: "/app/appointments", search: { new: 1, cita: undefined } });
       toast.success("Abriendo formulario de nueva cita");
     } finally {
       setTimeout(() => setCreating(false), 400);
@@ -57,6 +57,16 @@ export function AppTopbar({ onMenuClick, title }: { onMenuClick: () => void; tit
   const handleClearAll = async () => {
     await clearAll();
     toast.success("Notificaciones eliminadas");
+  };
+
+  // Click en una notificacion: marca leida y navega a la cita asociada si existe.
+  const handleOpen = (n: Notification) => {
+    markRead(n.id);
+    if (!n.appointmentId) return;
+    navigate({
+      to: role === "client" ? "/app/my-appointments" : "/app/appointments",
+      search: { cita: n.appointmentId },
+    });
   };
 
   return (
@@ -143,11 +153,14 @@ export function AppTopbar({ onMenuClick, title }: { onMenuClick: () => void; tit
               {notifs.map((n) => {
                 const Icon = n.icon;
                 return (
-                  <li key={n.id}>
+                  <li
+                    key={n.id}
+                    className="group flex items-stretch border-b border-border last:border-b-0"
+                  >
                     <button
-                      onClick={() => markRead(n.id)}
+                      onClick={() => handleOpen(n)}
                       className={cn(
-                        "flex w-full items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-accent/60 last:border-b-0",
+                        "flex min-w-0 flex-1 items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/60",
                         !n.read && "bg-primary/[0.03]",
                       )}
                     >
@@ -173,6 +186,17 @@ export function AppTopbar({ onMenuClick, title }: { onMenuClick: () => void; tit
                           {n.time}
                         </p>
                       </div>
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await remove(n.id);
+                        toast.success("Notificación eliminada");
+                      }}
+                      aria-label={`Eliminar notificación: ${n.title}`}
+                      title="Eliminar"
+                      className="flex shrink-0 items-center border-l border-border px-2.5 text-muted-foreground opacity-70 transition-colors hover:bg-destructive/10 hover:text-destructive hover:opacity-100"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </li>
                 );

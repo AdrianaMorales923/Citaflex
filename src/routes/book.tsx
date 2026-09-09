@@ -288,8 +288,9 @@ function PublicBooking() {
     setSubmitting(true);
     try {
       const clientId = await findClientId();
+      const appointmentId = crypto.randomUUID();
       const { error } = await supabase.from("appointments").insert({
-        id: crypto.randomUUID(),
+        id: appointmentId,
         business_id: business?.id,
         date: dateStr(date),
         time,
@@ -305,6 +306,7 @@ function PublicBooking() {
         description: `${name.trim()} reservó ${service.name} con ${staffMember.name} el ${dateStr(date)} a las ${time}.`,
         tone: "primary",
         icon: "Calendar",
+        appointmentId,
       });
 
       toast.success(
@@ -414,7 +416,9 @@ function PublicBooking() {
               </Button>
               {user ? (
                 <Button asChild>
-                  <Link to="/app/my-appointments">Ver mis citas</Link>
+                  <Link to="/app/my-appointments" search={{ cita: undefined }}>
+                    Ver mis citas
+                  </Link>
                 </Button>
               ) : (
                 <Button asChild>
