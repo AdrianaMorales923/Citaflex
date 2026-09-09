@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { formatMoney } from "@/lib/money";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Plus,
   Search,
@@ -191,6 +191,8 @@ function Services() {
   const [formStaffIds, setFormStaffIds] = useState<string[]>([]);
   const [formStatus, setFormStatus] = useState<ServiceStatus>("Activo");
   const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -305,49 +307,60 @@ function Services() {
   };
 
   const saveService = async () => {
+    if (savingRef.current) return;
     if (!validateForm()) return;
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      const payload = {
+        name: formName.trim(),
+        category: formCategory,
+        duration: parseInt(formDuration, 10),
+        price: parseInt(formPrice, 10),
+        description: formDescription.trim() || null,
+        status: formStatus,
+      };
 
-    const payload = {
-      name: formName.trim(),
-      category: formCategory,
-      duration: parseInt(formDuration, 10),
-      price: parseInt(formPrice, 10),
-      description: formDescription.trim() || null,
-      status: formStatus,
-    };
+      if (editing) {
+        const { error } = await supabase.from("services").update(payload).eq("id", editing.id);
+        if (error) {
+          toast.error("Error: " + error.message);
+          return;
+        }
 
-    if (editing) {
-      const { error } = await supabase.from("services").update(payload).eq("id", editing.id);
-      if (error) {
-        toast.error("Error: " + error.message);
-        return;
+        // Update staff assignments
+        await supabase.from("service_staff").delete().eq("service_id", editing.id);
+        if (formStaffIds.length > 0) {
+          await supabase
+            .from("service_staff")
+            .insert(formStaffIds.map((sid) => ({ service_id: editing.id, staff_id: sid })));
+        }
+        toast.success("Servicio actualizado");
+      } else {
+        const { data, error } = await supabase
+          .from("services")
+          .insert(payload)
+          .select("id")
+          .single();
+        if (error) {
+          toast.error("Error: " + error.message);
+          return;
+        }
+
+        if (data && formStaffIds.length > 0) {
+          await supabase
+            .from("service_staff")
+            .insert(formStaffIds.map((sid) => ({ service_id: data.id, staff_id: sid })));
+        }
+        toast.success("Servicio creado");
       }
 
-      // Update staff assignments
-      await supabase.from("service_staff").delete().eq("service_id", editing.id);
-      if (formStaffIds.length > 0) {
-        await supabase
-          .from("service_staff")
-          .insert(formStaffIds.map((sid) => ({ service_id: editing.id, staff_id: sid })));
-      }
-      toast.success("Servicio actualizado");
-    } else {
-      const { data, error } = await supabase.from("services").insert(payload).select("id").single();
-      if (error) {
-        toast.error("Error: " + error.message);
-        return;
-      }
-
-      if (data && formStaffIds.length > 0) {
-        await supabase
-          .from("service_staff")
-          .insert(formStaffIds.map((sid) => ({ service_id: data.id, staff_id: sid })));
-      }
-      toast.success("Servicio creado");
+      setDialogOpen(false);
+      fetchData();
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
     }
-
-    setDialogOpen(false);
-    fetchData();
   };
 
   const deleteService = async (svc: Service) => {
@@ -791,7 +804,9 @@ function Services() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={saveService}>{editing ? "Guardar cambios" : "Crear servicio"}</Button>
+            <Button onClick={saveService} disabled={saving}>
+              {saving ? "Guardando..." : editing ? "Guardar cambios" : "Crear servicio"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -821,5 +836,3 @@ function Services() {
     </div>
   );
 }
-
-export default Services;
