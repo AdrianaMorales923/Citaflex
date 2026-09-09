@@ -46,8 +46,9 @@ Despues de guardarlas, vuelve a desplegar (**Redeploy**).
 
 ## Notas
 
-- Supabase Auth requiere que el correo este confirmado en produccion. Para la
-  demo, desactiva "Confirm email" en **Supabase > Authentication > Providers**,
-  o usa los usuarios de la semilla (ya confirmados).
+- La "autenticacion" es una demo por consulta directa a `public.users` (no hay
+  Supabase Auth ni correo de confirmacion): la sesion vive en el localStorage
+  del navegador. Tras un deploy sobre una base nueva, vuelve a ejecutar
+  `supabase/database.sql` o las cuentas demo no existiran.
 - Si cambias rutas, regenera el arbol de rutas antes de desplegar:
   `npx @tanstack/router-cli generate` (el repo no usa el plugin de Vite).

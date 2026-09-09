@@ -9,4 +9,17 @@ export default defineConfig({
     host: true,
     strictPort: false,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom", "@tanstack/react-router"],
+          charts: ["recharts"],
+          dates: ["react-day-picker"],
+          icons: ["lucide-react"],
+          supabase: ["@supabase/supabase-js"],
+        },
+      },
+    },
+  },
 });

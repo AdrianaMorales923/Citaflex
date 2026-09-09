@@ -19,10 +19,10 @@ Plataforma SaaS para gestionar citas, clientes y servicios, disenada para profes
 
 ### Backend
 
-| Tecnologia            | Uso                                  |
-| --------------------- | ------------------------------------ |
-| Supabase              | PostgreSQL + autenticacion + storage |
-| @supabase/supabase-js | Cliente JS para Supabase             |
+| Tecnologia            | Uso                      |
+| --------------------- | ------------------------ |
+| Supabase              | PostgreSQL + realtime    |
+| @supabase/supabase-js | Cliente JS para Supabase |
 
 ## Funcionalidades
 
@@ -36,9 +36,7 @@ Plataforma SaaS para gestionar citas, clientes y servicios, disenada para profes
 - **100% responsive:** Movil, tablet y escritorio.
 - **En espanol:** Interfaz completa con moneda COP.
 
-> Estado de implementacion abajo en [Estado de implementacion](#estado-de-implementacion):
-> el detalle de cliente (`/app/clients/$id`) todavia usa datos de demostracion
-> hardcodeados; el resto de vistas esta conectado a Supabase.
+> Estado de implementacion abajo en [Estado de implementacion](#estado-de-implementacion).
 
 ## Inicio rapido
 
@@ -81,7 +79,7 @@ ultimos 365 dias) para que el dashboard y los reportes muestren datos de inmedia
 | Clientes `/app/clients`                 | Conectado (CRUD + historial)                                            |
 | Servicios `/app/services`               | Conectado (CRUD + asignacion de personal)                               |
 | Personal `/app/staff`                   | Conectado (listado + conteo de citas)                                   |
-| Login / Registro / Recuperar contrasena | Conectado a Supabase Auth                                               |
+| Login / Registro / Recuperar contrasena | Conectado (demo: login directo a `public.users`)                        |
 | Reserva publica `/book`                 | Conectado (lee la BD real y crea citas)                                 |
 | Estadisticas `/app/statistics`          | Conectado a Supabase (con filtros y exportacion CSV/PDF)                |
 | Reportes `/app/reports`                 | Conectado a Supabase (5 fuentes + exportacion)                          |
@@ -89,21 +87,21 @@ ultimos 365 dias) para que el dashboard y los reportes muestren datos de inmedia
 | Mis citas `/app/my-appointments`        | Conectado (citas del cliente logueado + cancelacion)                    |
 | Historial `/app/history`                | Conectado (visitas pasadas del cliente logueado)                        |
 | Mi perfil `/app/profile`                | Conectado (perfil real editable, foto de perfil y cambio de contrasena) |
-| Detalle de cliente `/app/clients/$id`   | **Demo**                                                                |
+| Detalle de cliente `/app/clients/$id`   | Conectado (cliente + historial de citas)                                |
 
 ### Tablas
 
-| Tabla           | Descripcion                              |
-| --------------- | ---------------------------------------- |
-| `users`         | Usuarios de autenticacion                |
-| `profiles`      | Nombre, telefono, ubicacion, bio, avatar |
-| `businesses`    | Negocios registrados                     |
-| `staff`         | Personal asignado a un negocio           |
-| `services`      | Servicios ofrecidos                      |
-| `service_staff` | Relacion servicio <-> personal           |
-| `clients`       | Clientes del negocio                     |
-| `appointments`  | Citas agendadas                          |
-| `notifications` | Notificaciones del sistema               |
+| Tabla           | Descripcion                               |
+| --------------- | ----------------------------------------- |
+| `users`         | Usuarios del sistema (login demo directo) |
+| `profiles`      | Nombre, telefono, ubicacion, bio, avatar  |
+| `businesses`    | Negocios registrados                      |
+| `staff`         | Personal asignado a un negocio            |
+| `services`      | Servicios ofrecidos                       |
+| `service_staff` | Relacion servicio <-> personal            |
+| `clients`       | Clientes del negocio                      |
+| `appointments`  | Citas agendadas                           |
+| `notifications` | Notificaciones del sistema                |
 
 ## Despliegue en Vercel
 
